@@ -1,0 +1,10 @@
+autogen-agentchat
+autogen-core
+autogen-ext
+asyncio
+dotenv
+openai
+anthropic
+autogen-ext[openai,anthropic]
+tiktoken
+mysql-connector-python

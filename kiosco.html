@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agendamiento de Citas - Medical&Care</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos base para que se parezca a tu web */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc; /* Un gris muy claro */
+        }
+        .screen {
+            display: none; /* Todas las pantallas ocultas por defecto */
+            min-height: 100vh;
+            animation: fadeIn 0.5s;
+        }
+        .screen.active {
+            display: flex; /* La pantalla activa se muestra */
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        /* Estilos para los botones y tarjetas, para que coincidan con tu marca */
+        .card-primary {
+            background-color: white;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        .card-primary:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 82, 155, 0.15);
+        }
+        .btn-primary {
+            background-color: #00529B;
+            color: white;
+            font-weight: bold;
+            padding: 1rem 2.5rem;
+            border-radius: 0.75rem;
+            transition: background-color 0.3s ease;
+            font-size: 1.25rem;
+        }
+        .btn-primary:hover {
+            background-color: #003d73;
+        }
+        .btn-secondary {
+            background-color: #dc2626; /* Rojo */
+            color: white;
+            font-weight: bold;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            transition: background-color 0.3s ease;
+            font-size: 1rem;
+        }
+        .btn-secondary:hover {
+            background-color: #b91c1c;
+        }
+        .btn-gray {
+            background-color: #6b7280; /* Gris */
+            color: white;
+            font-weight: bold;
+            padding: 0.75rem 2rem;
+            border-radius: 0.75rem;
+            transition: background-color 0.3s ease;
+            font-size: 1rem;
+        }
+        .btn-gray:hover {
+            background-color: #4b5563;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center">
+
+    <div id="screen-cedula" class="screen active flex-col items-center justify-center p-8">
+        <img src="images/logo.png" alt="Medical&Care Logo" style="width: 150px;">
+        <h1 class="text-4xl font-bold text-gray-800 mb-4">Agendamiento de Citas</h1>
+        <p class="text-xl text-gray-600 mb-8">Ingresa tu número de cédula para comenzar</p>
+        <input type="text" id="cedula-input" class="text-3xl text-center w-full max-w-md p-4 border-2 border-gray-300 rounded-lg mb-8" placeholder="Ej: 1712345678">
+        <button class="btn-primary">Verificar</button>
+        <a href="https://medicalcare.ec/intranet/perfil/" class="text-blue-600 mt-8">¿Eres nuevo? Regístrate aquí</a>
+    </div>
+
+    <div id="screen-especialidad" class="screen flex-col items-center justify-center p-8">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">Hola, <span id="patient-name"></span></h1>
+        <p class="text-xl text-gray-600 mb-12">Elige la especialidad para tu cita</p>
+        <div id="specialties-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            <!-- Las especialidades se cargarán aquí dinámicamente -->
+        </div>
+        <div class="flex space-x-4">
+            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="screen-doctores" class="screen flex-col items-center justify-center p-8">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">Elige un Médico</h1>
+        <p class="text-xl text-gray-600 mb-12">Estos son los doctores disponibles para la especialidad seleccionada.</p>
+        <div id="doctors-grid" class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+            <!-- Los doctores se cargarán aquí dinámicamente -->
+        </div>
+        <div class="flex space-x-4">
+            <button class="btn-gray" onclick="showScreen('screen-especialidad')">Regresar</button>
+            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="screen-fechas" class="screen flex-col items-center justify-center p-8">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">Elige una Fecha</h1>
+        <p class="text-xl text-gray-600 mb-12">Fechas con turnos disponibles para el médico seleccionado.</p>
+        <div id="dates-grid" class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+            <!-- Las fechas se cargarán aquí dinámicamente -->
+        </div>
+        <div class="flex space-x-4">
+            <button class="btn-gray" onclick="showScreen('screen-doctores')">Regresar</button>
+            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="screen-horas" class="screen flex-col items-center justify-center p-8">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">Elige una Hora</h1>
+        <p class="text-xl text-gray-600 mb-12">Horas disponibles para el día seleccionado.</p>
+        <div id="hours-grid" class="grid grid-cols-3 md:grid-cols-6 gap-4 mb-12">
+            <!-- Las horas se cargarán aquí dinámicamente -->
+        </div>
+        <div class="flex space-x-4">
+            <button class="btn-gray" onclick="showScreen('screen-fechas')">Regresar</button>
+            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="screen-examenes" class="screen flex-col items-center justify-center p-8">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2" id="titulo-examenes">Exámenes de Imagenología</h1>
+        <p class="text-xl text-gray-600 mb-4" id="subtitulo-examenes">Elige el examen que necesitas.</p>
+        
+        <!-- Barra de búsqueda -->
+        <div class="w-full max-w-2xl mb-8">
+            <div class="relative">
+                <input type="text" id="buscar-examen" 
+                       class="w-full p-4 pl-12 border-2 border-gray-300 rounded-lg text-lg focus:border-blue-500 focus:outline-none"
+                       placeholder="🔍 Buscar examen... Ej: glucosa, c p k, tiroides">
+                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <button id="limpiar-busqueda" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <p id="contador-resultados" class="text-sm text-gray-500 mt-2 text-center"></p>
+        </div>
+
+        <div id="examenes-grid" class="w-full max-w-5xl space-y-3 mb-12">
+            <!-- Los exámenes se cargarán aquí dinámicamente -->
+        </div>
+        <div class="flex space-x-4">
+            <button class="btn-gray" onclick="showScreen('screen-especialidad')">Regresar</button>
+            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="screen-pago" class="screen flex-col items-center justify-center p-8">
+        <h1 class="text-4xl font-bold">Confirmación y Pago</h1>
+    </div>
+
+    <!-- Modal para Club Medical -->
+    <div id="modal-club-medical" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg p-8 max-w-md mx-4">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Club Medical</h2>
+            <p class="text-gray-600 mb-6">
+                No eres Club Medical, suscríbete por tan solo $10 al año para precios preferenciales y recibe tu primera consulta de Medicina General gratuita.
+            </p>
+            <div class="flex space-x-4">
+                <a href="https://www.medicalcare.ec/intranet" target="_blank" class="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                    Inscribirme
+                </a>
+                <button onclick="closeModal()" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Función para mostrar el modal
+        function showModal() {
+            document.getElementById('modal-club-medical').classList.remove('hidden');
+        }
+
+        // Función para cerrar el modal
+        function closeModal() {
+            document.getElementById('modal-club-medical').classList.add('hidden');
+        }
+        // Hacemos que la función showScreen sea global para poder llamarla desde el HTML (onclick)
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            const activeScreen = document.getElementById(screenId);
+            if (activeScreen) {
+                activeScreen.classList.add('active');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // --- REFERENCIAS A ELEMENTOS DEL HTML ---
+            const cedulaInput = document.getElementById('cedula-input');
+            const verificarBtn = document.querySelector('#screen-cedula .btn-primary');
+            const patientNameSpan = document.getElementById('patient-name');
+            const specialtiesGrid = document.getElementById('specialties-grid');
+            const doctorsGrid = document.getElementById('doctors-grid');
+            const datesGrid = document.getElementById('dates-grid');
+            const hoursGrid = document.getElementById('hours-grid');
+
+            // --- Variables para guardar el estado de la selección ---
+            let selectedMedicoId = null;
+            let currentPatientId = null;
+            let currentPatientName = null;
+            let selectedEspecialidad = null;
+            let selectedPrecio = null;
+            let selectedTipoPrecio = null; // 'regular' o 'club'
+
+            // --- FUNCIÓN AUXILIAR PARA FORMATEAR FECHA ---
+            function fechaLetras(dateString) {
+                const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+                const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+                // Se añade T00:00:00 para evitar problemas de zona horaria
+                const fecha = new Date(dateString + 'T00:00:00');
+                return `${dias[fecha.getDay()]}, ${fecha.getDate()} de ${meses[fecha.getMonth()]} del ${fecha.getFullYear()}`;
+            }
+
+            // --- FUNCIÓN PARA CARGAR HORAS ---
+            async function cargarHoras(idMedico, fecha) {
+                try {
+                    const response = await fetch(`http://localhost/turnosMedical/API/get_horas.php?idMedico=${idMedico}&fecha=${fecha}`);
+                    const horas = await response.json();
+
+                    hoursGrid.innerHTML = ''; // Limpiamos
+
+                    if (horas.length === 0) {
+                        hoursGrid.innerHTML = '<p class="text-gray-600 col-span-full">No hay horas disponibles para esta fecha.</p>';
+                        return;
+                    }
+
+                    horas.forEach(hora => {
+                        const button = document.createElement('button');
+                        button.className = 'btn-primary';
+                        button.dataset.id = hora.idHorarioMedico;
+                        button.textContent = hora.hora;
+                        
+                        button.addEventListener('click', () => {
+                            // Lógica final de confirmación
+                            console.log(`Cita seleccionada: Médico ${idMedico}, Fecha ${fecha}, Hora ${hora.hora}`);
+                            // Aquí se podría poblar la pantalla de pago/confirmación
+                            showScreen('screen-pago');
+                        });
+
+                        hoursGrid.appendChild(button);
+                    });
+
+                } catch (error) {
+                    console.error('Error al cargar horas:', error);
+                    alert('Hubo un problema al cargar las horas.');
+                }
+            }
+
+            // --- FUNCIÓN PARA CARGAR FECHAS ---
+            async function cargarFechas(idMedico) {
+                selectedMedicoId = idMedico; // Guardamos el médico seleccionado
+                try {
+                    const response = await fetch(`http://localhost/turnosMedical/API/get_fechas.php?idMedico=${idMedico}`);
+                    const fechas = await response.json();
+
+                    datesGrid.innerHTML = ''; // Limpiamos
+
+                    if (fechas.length === 0) {
+                        datesGrid.innerHTML = '<p class="text-gray-600 col-span-full">No hay fechas disponibles para este médico.</p>';
+                        return;
+                    }
+
+                    fechas.forEach(fecha => {
+                        const card = document.createElement('div');
+                        card.className = 'card-primary p-6 text-center';
+                        card.dataset.date = fecha.fechaHorario;
+                        
+                        card.innerHTML = `
+                            <i class="fas fa-calendar-alt text-5xl text-blue-800 mb-4"></i>
+                            <h3 class="text-lg font-bold">${fechaLetras(fecha.fechaHorario)}</h3>
+                        `;
+                        
+                        card.addEventListener('click', async () => {
+                            await cargarHoras(idMedico, fecha.fechaHorario);
+                            showScreen('screen-horas');
+                        });
+
+                        datesGrid.appendChild(card);
+                    });
+
+                } catch (error) {
+                    console.error('Error al cargar fechas:', error);
+                    alert('Hubo un problema al cargar las fechas.');
+                }
+            }
+
+            // --- FUNCIÓN PARA CARGAR DOCTORES ---
+            async function cargarDoctores(idEspecialidad) {
+                try {
+                    const response = await fetch(`http://localhost/turnosMedical/API/get_doctores.php?idEspecialidad=${idEspecialidad}`);
+                    const doctores = await response.json();
+
+                    doctorsGrid.innerHTML = ''; // Limpiamos el contenido previo
+
+                    if (doctores.length === 0) {
+                        doctorsGrid.innerHTML = '<p class="text-gray-600 col-span-full">No hay doctores con agenda disponible para esta especialidad.</p>';
+                        return;
+                    }
+
+                    doctores.forEach(doctor => {
+                        const card = document.createElement('div');
+                        card.className = 'card-primary p-8 text-center';
+                        card.dataset.id = doctor.idMedico;
+                        
+                        card.innerHTML = `
+                            <i class="fas fa-user-md text-5xl text-blue-800 mb-4"></i>
+                            <h3 class="text-xl font-bold">${doctor.nombreCompleto}</h3>
+                        `;
+                        
+                        card.addEventListener('click', async () => {
+                            await cargarFechas(doctor.idMedico);
+                            showScreen('screen-fechas');
+                        });
+
+                        doctorsGrid.appendChild(card);
+                    });
+
+                } catch (error) {
+                    console.error('Error al cargar doctores:', error);
+                    alert('Hubo un problema al cargar los doctores.');
+                }
+            }
+
+            // --- FUNCIÓN AUXILIAR PARA GENERAR NOMBRE DE IMAGEN ---
+            function generarNombreImagen(descEspecialidad) {
+                // 1. Normalizar para quitar acentos de forma segura (ej: í -> i)
+                const sinAcentos = descEspecialidad.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+
+                // 2. Convertir a minúsculas, reemplazar espacios y limpiar
+                return sinAcentos
+                    .toLowerCase()
+                    .replace(/\s+/g, '_') // Reemplazar espacios con guiones bajos
+                    .replace(/[^a-z0-9_]/g, '') // Remover caracteres que no sean letras, números o guion bajo
+                    .replace(/_+/g, '_') // Evitar múltiples guiones bajos
+                    .replace(/^_|_$/g, ''); // Remover guiones bajos al inicio y final
+            }
+
+            // --- FUNCIÓN PARA RENDERIZAR EXÁMENES CON BÚSQUEDA ---
+            function renderizarExamenes(examenes, terminoBusqueda = '') {
+                const examenesGrid = document.getElementById('examenes-grid');
+                const contadorResultados = document.getElementById('contador-resultados');
+                const limpiarBusqueda = document.getElementById('limpiar-busqueda');
+                
+                examenesGrid.innerHTML = '';
+
+                if (examenes.length === 0) {
+                    examenesGrid.innerHTML = '<p class="text-gray-600 text-center py-8">No se encontraron exámenes que coincidan con tu búsqueda.</p>';
+                    contadorResultados.textContent = '0 resultados';
+                    limpiarBusqueda.classList.add('hidden');
+                    return;
+                }
+
+                // Mostrar contador de resultados
+                const totalExamenes = examenes.length;
+                contadorResultados.textContent = terminoBusqueda 
+                    ? `${totalExamenes} resultado${totalExamenes !== 1 ? 's' : ''} para "${terminoBusqueda}"`
+                    : `${totalExamenes} exámenes disponibles`;
+
+                // Mostrar botón de limpiar búsqueda si hay término de búsqueda
+                limpiarBusqueda.classList.toggle('hidden', !terminoBusqueda);
+
+                // Si hay búsqueda, mostrar resultados sin categorías
+                if (terminoBusqueda) {
+                    examenes.forEach(examen => {
+                        const listItem = document.createElement('div');
+                        listItem.className = 'w-full flex items-center bg-white p-3 rounded-lg shadow';
+
+                        // Columna 1: Nombre del Examen
+                        const nameDiv = document.createElement('div');
+                        nameDiv.className = 'flex-grow pr-4';
+                        // Usar descripcion_visible si existe, sino usar descripcion
+                        const nombreMostrar = examen.descripcion_visible || examen.descripcion;
+                        nameDiv.innerHTML = `<h3 class="text-md font-semibold text-gray-800">${nombreMostrar}</h3>`;
+                        
+                        // Columna 2: Botones de Selección
+                        const buttonsDiv = document.createElement('div');
+                        buttonsDiv.className = 'flex items-center space-x-2 flex-shrink-0';
+                        
+                        buttonsDiv.innerHTML = `
+                            <button class="py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors" onclick="seleccionarExamen('${examen.descripcion}', ${examen.precio_particular}, 'particular')">
+                                Particular: ${examen.precio_particular.toFixed(2)}
+                            </button>
+                            <button class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors" onclick="seleccionarExamen('${examen.descripcion}', ${examen.precio_club}, 'club')">
+                                Club: ${examen.precio_club.toFixed(2)}
+                            </button>
+                        `;
+
+                        listItem.appendChild(nameDiv);
+                        listItem.appendChild(buttonsDiv);
+                        examenesGrid.appendChild(listItem);
+                    });
+                } else {
+                    // Sin búsqueda, mostrar por categorías (solo para laboratorio)
+                    const tituloExamenes = document.getElementById('titulo-examenes').textContent;
+                    
+                    if (tituloExamenes.includes('Laboratorio')) {
+                        // Agrupar exámenes por categorías (solo para laboratorio)
+                        const categorias = {
+                            'ORINA': [],
+                            'HECES': [],
+                            'HEMATOLOGÍA': [],
+                            'BIOQUÍMICA': [],
+                            'INMUNOLOGÍA': [],
+                            'HORMONAS': [],
+                            'OTROS': []
+                        };
+
+                        // Clasificar exámenes por categorías
+                        examenes.forEach(examen => {
+                            const descripcion = examen.descripcion.toUpperCase();
+                            
+                            if (descripcion.includes('ORINA')) {
+                                categorias['ORINA'].push(examen);
+                            } else if (descripcion.includes('HECES') || descripcion.includes('COPRO')) {
+                                categorias['HECES'].push(examen);
+                            } else if (descripcion.includes('HEMO') || descripcion.includes('SANGRE') || descripcion.includes('PLAQUETA')) {
+                                categorias['HEMATOLOGÍA'].push(examen);
+                            } else if (descripcion.includes('GLUCOSA') || descripcion.includes('COLESTEROL') || descripcion.includes('TRIGLICERIDOS') || 
+                                       descripcion.includes('BILIRRUBINA') || descripcion.includes('CREATININA') || descripcion.includes('UREA')) {
+                                categorias['BIOQUÍMICA'].push(examen);
+                            } else if (descripcion.includes('IGG') || descripcion.includes('IGM') || descripcion.includes('ANTI') || 
+                                       descripcion.includes('HEPATITIS') || descripcion.includes('HIV') || descripcion.includes('COVID')) {
+                                categorias['INMUNOLOGÍA'].push(examen);
+                            } else if (descripcion.includes('HORMONA') || descripcion.includes('TSH') || descripcion.includes('T3') || 
+                                       descripcion.includes('T4') || descripcion.includes('ESTROGENO') || descripcion.includes('TESTOSTERONA')) {
+                                categorias['HORMONAS'].push(examen);
+                            } else {
+                                categorias['OTROS'].push(examen);
+                            }
+                        });
+
+                        // Mostrar exámenes por categorías
+                        Object.entries(categorias).forEach(([categoria, examenesCategoria]) => {
+                            if (examenesCategoria.length > 0) {
+                                // Añadir título de categoría
+                                const tituloCategoria = document.createElement('h2');
+                                tituloCategoria.className = 'text-2xl font-bold text-gray-700 mt-6 mb-2 pt-4 border-t';
+                                tituloCategoria.textContent = categoria;
+                                examenesGrid.appendChild(tituloCategoria);
+
+                                // Añadir exámenes de la categoría
+                                examenesCategoria.forEach(examen => {
+                                    const listItem = document.createElement('div');
+                                    listItem.className = 'w-full flex items-center bg-white p-3 rounded-lg shadow';
+
+                                    const nameDiv = document.createElement('div');
+                                    nameDiv.className = 'flex-grow pr-4';
+                                    // Usar descripcion_visible si existe, sino usar descripcion
+                                    const nombreMostrar = examen.descripcion_visible || examen.descripcion;
+                                    nameDiv.innerHTML = `<h3 class="text-md font-semibold text-gray-800">${nombreMostrar}</h3>`;
+                                    
+                                    const buttonsDiv = document.createElement('div');
+                                    buttonsDiv.className = 'flex items-center space-x-2 flex-shrink-0';
+                                    
+                                    buttonsDiv.innerHTML = `
+                                        <button class="py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors" onclick="seleccionarExamen('${examen.descripcion}', ${examen.precio_particular}, 'particular')">
+                                            Particular: ${examen.precio_particular.toFixed(2)}
+                                        </button>
+                                        <button class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors" onclick="seleccionarExamen('${examen.descripcion}', ${examen.precio_club}, 'club')">
+                                            Club: ${examen.precio_club.toFixed(2)}
+                                        </button>
+                                    `;
+
+                                    listItem.appendChild(nameDiv);
+                                    listItem.appendChild(buttonsDiv);
+                                    examenesGrid.appendChild(listItem);
+                                });
+                            }
+                        });
+                    } else {
+                        // Para imagenología, mostrar sin categorías
+                        examenes.forEach(examen => {
+                            const listItem = document.createElement('div');
+                            listItem.className = 'w-full flex items-center bg-white p-3 rounded-lg shadow';
+
+                            const nameDiv = document.createElement('div');
+                            nameDiv.className = 'flex-grow pr-4';
+                            nameDiv.innerHTML = `<h3 class="text-md font-semibold text-gray-800">${examen.descripcion}</h3>`;
+                            
+                            const buttonsDiv = document.createElement('div');
+                            buttonsDiv.className = 'flex items-center space-x-2 flex-shrink-0';
+                            
+                            buttonsDiv.innerHTML = `
+                                <button class="py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors" onclick="seleccionarExamen('${examen.descripcion}', ${examen.precio_particular}, 'particular')">
+                                    Particular: ${examen.precio_particular.toFixed(2)}
+                                </button>
+                                <button class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors" onclick="seleccionarExamen('${examen.descripcion}', ${examen.precio_club}, 'club')">
+                                    Club: ${examen.precio_club.toFixed(2)}
+                                </button>
+                            `;
+
+                            listItem.appendChild(nameDiv);
+                            listItem.appendChild(buttonsDiv);
+                            examenesGrid.appendChild(listItem);
+                        });
+                    }
+                }
+            }
+
+            // --- FUNCIÓN PARA CARGAR EXÁMENES DE IMAGEN DESDE LA BD ---
+            async function cargarExamenes() {
+                const examenesGrid = document.getElementById('examenes-grid');
+                examenesGrid.className = 'w-full max-w-5xl space-y-3 mb-12';
+                examenesGrid.innerHTML = '<p class="text-gray-600">Cargando exámenes...</p>';
+
+                try {
+                    const response = await fetch('http://localhost/turnosMedical/API/get_examenes_eco.php');
+                    const examenes = await response.json();
+
+                    // Guardar exámenes en variable global para búsqueda
+                    window.examenesCargados = examenes;
+
+                    renderizarExamenes(examenes);
+
+                } catch (error) {
+                    console.error('Error al cargar exámenes:', error);
+                    examenesGrid.innerHTML = '<p class="text-red-600">Error al cargar los exámenes. Intente nuevamente.</p>';
+                }
+            }
+
+            // --- BASE DE DATOS DE SINÓNIMOS Y MAPEOS MÉDICOS MEJORADA ---
+            const sinonimosMedicos = {
+                // Para C,P,K y variaciones (MUCHO MÁS ROBUSTO)
+                "c p k": ["c,p,k", "cpk", "kpc", "pck", "c k p", "p c k", "k c p", "p k c", "k p c",
+                          "calcio fosforo potasio", "calcio fósforo potasio", "calcium phosphorus potassium",
+                          "calcio phosphorus potassium", "calcio p k", "ca p k", "c p k", "c p k"],
+                "c,p,k": ["c p k", "cpk", "kpc", "pck", "calcio fosforo potasio", "calcio", "fosforo", "potasio"],
+                "calcio": ["c", "ca", "calcium", "c p k", "cpk", "calcio fosforo", "calcio potasio"],
+                "fosforo": ["p", "fósforo", "phosphorus", "fosfor", "c p k", "cpk", "fosforo calcio", "fosforo potasio"],
+                "potasio": ["k", "potassium", "potasio", "c p k", "cpk", "potasio calcio", "potasio fosforo"],
+                
+                // Para HIV/SIDA (EXPANDIDO)
+                "hiv": ["vih", "sida", "aids", "virus inmunodeficiencia humana", "virus de inmunodeficiencia humana",
+                        "h,i,v, 1&2", "hiv 1&2", "hiv sida", "vih sida"],
+                "sida": ["hiv", "vih", "aids", "síndrome inmunodeficiencia adquirida", "sindrome inmunodeficiencia adquirida",
+                         "hiv sida", "vih sida", "h,i,v, 1&2", "hiv 1&2"],
+                "vih": ["hiv", "sida", "aids", "virus inmunodeficiencia humana", "h,i,v, 1&2", "hiv 1&2", "hiv sida"],
+                "h,i,v, 1&2": ["hiv 1&2", "vih 1&2", "hiv", "vih", "sida", "aids"],
+                "hiv sida": ["vih sida", "hiv", "vih", "sida", "aids"],
+                
+                // Para T3, T4, TSH
+                "t3 t4 tsh": ["t3,t4,tsh", "tsh t3 t4", "t3 t4", "t4 t3", "tsh t3", "tsh t4",
+                              "hormonas tiroideas", "tiroides", "hormonas tiroides", "t3 t4 tsh"],
+                "t3": ["triyodotironina", "triiodothyronine", "t3 t4", "t3 tsh", "hormona t3"],
+                "t4": ["tiroxina", "thyroxine", "t3 t4", "t4 tsh", "hormona t4"],
+                "tsh": ["hormona estimulante tiroides", "thyroid stimulating hormone", "tsh t3", "tsh t4", "hormona tsh"],
+                
+                // Exámenes comunes (EXPANDIDO)
+                "glucosa": ["azúcar", "azucar", "sugar", "glucose", "azucar en sangre", "glucosa en ayunas"],
+                "colesterol": ["cholesterol", "colesterol total", "colesterol hdl", "colesterol ldl"],
+                "trigliceridos": ["triglicéridos", "triglycerides", "trigliceridos en sangre"],
+                "hemoglobina": ["hb", "hgb", "hemoglobin", "hemoglobina glicosilada", "hemoglobina glucosilada"],
+                "creatinina": ["creatinine", "creatinina en sangre"],
+                "urea": ["urea", "bun", "nitrogeno ureico"],
+                "acido urico": ["ácido úrico", "uric acid", "acido urico en sangre"],
+                "bilirrubina": ["bilirubin", "bilirrubinas", "bilirrubina total", "bilirrubina directa"],
+                "transaminasa": ["transaminase", "tgo", "tgp", "transaminasas"],
+                "amilasa": ["amylase", "amilasa en sangre"],
+                "lipasa": ["lipase", "lipasa en sangre"],
+                
+                // Categorías generales (EXPANDIDO)
+                "orina": ["urinario", "urinary", "orina completa", "analisis de orina", "examen de orina"],
+                "heces": ["coprológico", "coprologico", "fecal", "feces", "examen de heces", "analisis de heces"],
+                "sangre": ["hemático", "hematico", "blood", "analisis de sangre", "examen de sangre", "hemograma"],
+                "hormona": ["hormonal", "hormone", "hormonas", "perfil hormonal"],
+                "infeccion": ["infección", "infection", "infeccioso", "infecciosa"],
+                "virus": ["viral", "virology", "virologia", "viral"],
+                "bacteria": ["bacterial", "bacteriology", "bacteriologia", "bacteriano"],
+                
+                // Términos específicos de laboratorio (EXPANDIDO)
+                "gram": ["gramo", "gram stain", "tincion de gram", "gram sedimento", "gram gota fresca"],
+                "cultivo": ["culture", "cultivo", "urocultivo", "coprocultivo", "hemocultivo"],
+                "parasito": ["parásito", "parasite", "coprologico", "coparasitario"],
+                "embarazo": ["gestación", "gestacion", "pregnancy", "prueba de embarazo", "beta hcg"],
+                "covid": ["coronavirus", "sars-cov-2", "covid19", "covid 19", "covid-19"],
+                "hepatitis": ["hep", "hepatitis a", "hepatitis b", "hepatitis c", "hepatitis viral"],
+                "vdrl": ["sífilis", "sifilis", "syphilis", "vdrl", "fta abs"]
+            };
+
+            // --- ALGORITMO DE BÚSQUEDA INTELIGENTE ---
+            function normalizarTexto(texto) {
+                return texto
+                    .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quitar tildes
+                    .toLowerCase()
+                    .replace(/[^a-z0-9\s]/g, ' ') // Remover caracteres especiales, mantener espacios
+                    .replace(/\s+/g, ' ') // Normalizar espacios múltiples
+                    .trim();
+            }
+
+            function calcularDistanciaLevenshtein(a, b) {
+                if (a.length === 0) return b.length;
+                if (b.length === 0) return a.length;
+
+                const matrix = [];
+                for (let i = 0; i <= b.length; i++) {
+                    matrix[i] = [i];
+                }
+                for (let j = 0; j <= a.length; j++) {
+                    matrix[0][j] = j;
+                }
+
+                for (let i = 1; i <= b.length; i++) {
+                    for (let j = 1; j <= a.length; j++) {
+                        if (b.charAt(i-1) === a.charAt(j-1)) {
+                            matrix[i][j] = matrix[i-1][j-1];
+                        } else {
+                            matrix[i][j] = Math.min(
+                                matrix[i-1][j-1] + 1, // sustitución
+                                matrix[i][j-1] + 1,   // inserción
+                                matrix[i-1][j] + 1    // eliminación
+                            );
+                        }
+                    }
+                }
+
+                return matrix[b.length][a.length];
+            }
+
+            function esCoincidenciaFuzzy(terminoBusqueda, terminoExamen, umbral = 0.7) {
+                const distancia = calcularDistanciaLevenshtein(terminoBusqueda, terminoExamen);
+                const longitudMaxima = Math.max(terminoBusqueda.length, terminoExamen.length);
+                const similitud = 1 - (distancia / longitudMaxima);
+                return similitud >= umbral;
+            }
+
+            function expandirTerminosBusqueda(termino) {
+                const terminosExpandidos = new Set([termino]);
+                const terminoNormalizado = normalizarTexto(termino);
+
+                // Expansión por sinónimos directos
+                Object.keys(sinonimosMedicos).forEach(sinonimo => {
+                    const sinonimoNormalizado = normalizarTexto(sinonimo);
+                    
+                    // Si el término de búsqueda contiene el sinónimo
+                    if (terminoNormalizado.includes(sinonimoNormalizado)) {
+                        sinonimosMedicos[sinonimo].forEach(variante => {
+                            const nuevaBusqueda = terminoNormalizado.replace(sinonimoNormalizado, normalizarTexto(variante));
+                            terminosExpandidos.add(nuevaBusqueda);
+                        });
+                    }
+                    
+                    // También agregar el sinónimo principal si hay coincidencia parcial
+                    if (esCoincidenciaFuzzy(terminoNormalizado, sinonimoNormalizado, 0.6)) {
+                        terminosExpandidos.add(sinonimoNormalizado);
+                        sinonimosMedicos[sinonimo].forEach(variante => {
+                            terminosExpandidos.add(normalizarTexto(variante));
+                        });
+                    }
+                });
+
+                return Array.from(terminosExpandidos);
+            }
+
+            function extraerComponentes(texto) {
+                return normalizarTexto(texto)
+                    .split(/\s+/)
+                    .filter(token => token.length > 2); // Filtrar tokens muy cortos
+            }
+
+            function calcularPuntajeBusqueda(busqueda, examen) {
+                let puntaje = 0;
+                const busquedaNormalizada = normalizarTexto(busqueda);
+                
+                // Buscar tanto en descripcion original como en descripcion_visible
+                const descripcionOriginal = examen.descripcion || '';
+                const descripcionVisible = examen.descripcion_visible || '';
+                
+                const examenNormalizadoOriginal = normalizarTexto(descripcionOriginal);
+                const examenNormalizadoVisible = normalizarTexto(descripcionVisible);
+                
+                const componentesBusqueda = extraerComponentes(busqueda);
+                const componentesExamenOriginal = extraerComponentes(descripcionOriginal);
+                const componentesExamenVisible = extraerComponentes(descripcionVisible);
+
+                // 1. Coincidencia exacta (máxima prioridad)
+                if (examenNormalizadoOriginal === busquedaNormalizada || examenNormalizadoVisible === busquedaNormalizada) {
+                    puntaje += 1000;
+                }
+
+                // 2. Coincidencia parcial (substring) - en ambos campos
+                if (examenNormalizadoOriginal.includes(busquedaNormalizada)) {
+                    puntaje += 800;
+                } else if (examenNormalizadoVisible.includes(busquedaNormalizada)) {
+                    puntaje += 750; // Ligeramente menos que en el original
+                } else if (busquedaNormalizada.includes(examenNormalizadoOriginal) || busquedaNormalizada.includes(examenNormalizadoVisible)) {
+                    puntaje += 700;
+                }
+
+                // 3. Coincidencia por componentes - en ambos campos
+                const componentesCoincidentesOriginal = componentesBusqueda.filter(compBusqueda =>
+                    componentesExamenOriginal.some(compExamen => 
+                        compExamen.includes(compBusqueda) || compBusqueda.includes(compExamen) ||
+                        esCoincidenciaFuzzy(compBusqueda, compExamen, 0.8)
+                    )
+                ).length;
+
+                const componentesCoincidentesVisible = componentesBusqueda.filter(compBusqueda =>
+                    componentesExamenVisible.some(compExamen => 
+                        compExamen.includes(compBusqueda) || compBusqueda.includes(compExamen) ||
+                        esCoincidenciaFuzzy(compBusqueda, compExamen, 0.8)
+                    )
+                ).length;
+
+                const componentesCoincidentes = Math.max(componentesCoincidentesOriginal, componentesCoincidentesVisible);
+
+                if (componentesCoincidentes > 0) {
+                    puntaje += componentesCoincidentes * 100;
+                    
+                    // Bonus si coinciden todos los componentes principales
+                    if (componentesCoincidentes === componentesBusqueda.length) {
+                        puntaje += 200;
+                    }
+                }
+
+                // 4. Coincidencia por sinónimos expandidos - en ambos campos
+                const terminosExpandidos = expandirTerminosBusqueda(busqueda);
+                for (const terminoExpandido of terminosExpandidos) {
+                    if (examenNormalizadoOriginal.includes(terminoExpandido)) {
+                        puntaje += 150;
+                        break;
+                    } else if (examenNormalizadoVisible.includes(terminoExpandido)) {
+                        puntaje += 140; // Ligeramente menos que en el original
+                        break;
+                    }
+                }
+
+                // 5. Coincidencia fonética (Levenshtein) - en ambos campos
+                if (esCoincidenciaFuzzy(busquedaNormalizada, examenNormalizadoOriginal, 0.7)) {
+                    puntaje += 120;
+                } else if (esCoincidenciaFuzzy(busquedaNormalizada, examenNormalizadoVisible, 0.7)) {
+                    puntaje += 110; // Ligeramente menos que en el original
+                }
+
+                return puntaje;
+            }
+
+            function buscarExamenes(terminoBusqueda, examenes) {
+                if (!terminoBusqueda || terminoBusqueda.trim().length < 2) {
+                    return examenes; // Devolver todos si la búsqueda es muy corta
+                }
+
+                const resultadosConPuntaje = examenes.map(examen => ({
+                    examen,
+                    puntaje: calcularPuntajeBusqueda(terminoBusqueda, examen)
+                }));
+
+                // Filtrar resultados con puntaje significativo y ordenar
+                return resultadosConPuntaje
+                    .filter(resultado => resultado.puntaje > 50)
+                    .sort((a, b) => b.puntaje - a.puntaje)
+                    .map(resultado => resultado.examen);
+            }
+
+            // --- FUNCIÓN PARA CARGAR EXÁMENES DE LABORATORIO DESDE LA BD ---
+            async function cargarExamenesLaboratorio() {
+                const examenesGrid = document.getElementById('examenes-grid');
+                // Cambiamos el título de la pantalla
+                document.querySelector('#screen-examenes h1').textContent = 'Exámenes de Laboratorio';
+                document.querySelector('#screen-examenes p').textContent = 'Elige el examen que necesitas.';
+                
+                // Cambiamos las clases para que se comporte como una lista y añadimos margen inferior
+                examenesGrid.className = 'w-full max-w-5xl space-y-3 mb-12';
+                examenesGrid.innerHTML = '<p class="text-gray-600">Cargando exámenes de laboratorio...</p>'; // Mensaje de carga
+
+                try {
+                    const response = await fetch('http://localhost/turnosMedical/API/get_examenes_laboratorio.php');
+                    const examenes = await response.json();
+
+                    examenesGrid.innerHTML = ''; // Limpiar mensaje de carga
+
+                    if (examenes.length === 0) {
+                        examenesGrid.innerHTML = '<p class="text-gray-600">No hay exámenes de laboratorio disponibles.</p>';
+                        return;
+                    }
+
+                    // Agrupar exámenes por categorías
+                    const categorias = {
+                        'ORINA': [],
+                        'HECES': [],
+                        'HEMATOLOGÍA': [],
+                        'BIOQUÍMICA': [],
+                        'INMUNOLOGÍA': [],
+                        'HORMONAS': [],
+                        'OTROS': []
+                    };
+
+                    // Clasificar exámenes por categorías
+                    examenes.forEach(examen => {
+                        const descripcion = examen.descripcion.toUpperCase();
+                        
+                        if (descripcion.includes('ORINA')) {
+                            categorias['ORINA'].push(examen);
+                        } else if (descripcion.includes('HECES') || descripcion.includes('COPRO')) {
+                            categorias['HECES'].push(examen);
+                        } else if (descripcion.includes('HEMO') || descripcion.includes('SANGRE') || descripcion.includes('PLAQUETA')) {
+                            categorias['HEMATOLOGÍA'].push(examen);
+                        } else if (descripcion.includes('GLUCOSA') || descripcion.includes('COLESTEROL') || descripcion.includes('TRIGLICERIDOS') || 
+                                   descripcion.includes('BILIRRUBINA') || descripcion.includes('CREATININA') || descripcion.includes('UREA')) {
+                            categorias['BIOQUÍMICA'].push(examen);
+                        } else if (descripcion.includes('IGG') || descripcion.includes('IGM') || descripcion.includes('ANTI') || 
+                                   descripcion.includes('HEPATITIS') || descripcion.includes('HIV') || descripcion.includes('COVID')) {
+                            categorias['INMUNOLOGÍA'].push(examen);
+                        } else if (descripcion.includes('HORMONA') || descripcion.includes('TSH') || descripcion.includes('T3') || 
+                                   descripcion.includes('T4') || descripcion.includes('ESTROGENO') || descripcion.includes('TESTOSTERONA')) {
+                            categorias['HORMONAS'].push(examen);
+                        } else {
+                            categorias['OTROS'].push(examen);
+                        }
+                    });
+
+                    // Mostrar exámenes por categorías
+                    Object.entries(categorias).forEach(([categoria, examenesCategoria]) => {
+                        if (examenesCategoria.length > 0) {
+                            // Añadir título de categoría
+                            const tituloCategoria = document.createElement('h2');
+                            tituloCategoria.className = 'text-2xl font-bold text-gray-700 mt-6 mb-2 pt-4 border-t';
+                            tituloCategoria.textContent = categoria;
+                            examenesGrid.appendChild(tituloCategoria);
+
+                            // Añadir exámenes de la categoría
+                            examenesCategoria.forEach(examen => {
+                                const listItem = document.createElement('div');
+                                listItem.className = 'w-full flex items-center bg-white p-3 rounded-lg shadow';
+
+                                // Columna 1: Nombre del Examen
+                                const nameDiv = document.createElement('div');
+                                nameDiv.className = 'flex-grow pr-4';
+                                nameDiv.innerHTML = `<h3 class="text-md font-semibold text-gray-800">${examen.descripcion}</h3>`;
+                                
+                                // Columna 2: Botones de Selección
+                                const buttonsDiv = document.createElement('div');
+                                buttonsDiv.className = 'flex items-center space-x-2 flex-shrink-0';
+                                
+                                buttonsDiv.innerHTML = `
+                                    <button class="py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors" onclick="seleccionarExamen('${examen.descripcion}', ${examen.precio_particular}, 'particular')">
+                                        Particular: ${examen.precio_particular.toFixed(2)}
+                                    </button>
+                                    <button class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors" onclick="seleccionarExamen('${examen.descripcion}', ${examen.precio_club}, 'club')">
+                                        Club: ${examen.precio_club.toFixed(2)}
+                                    </button>
+                                `;
+
+                                listItem.appendChild(nameDiv);
+                                listItem.appendChild(buttonsDiv);
+                                examenesGrid.appendChild(listItem);
+                            });
+                        }
+                    });
+
+                } catch (error) {
+                    console.error('Error al cargar exámenes de laboratorio:', error);
+                    examenesGrid.innerHTML = '<p class="text-red-600">Error al cargar los exámenes de laboratorio. Intente nuevamente.</p>';
+                }
+            }
+
+            // --- FUNCIÓN PARA SELECCIONAR EXAMEN ---
+            function seleccionarExamen(descripcion, precio, tipo) {
+                if (tipo === 'club') {
+                    // Verificar si el paciente es Club Medical
+                    if (!currentPatientId) {
+                        showModal();
+                        return;
+                    }
+                    
+                    // Aquí deberías implementar la verificación de Club Medical
+                    // Por ahora, asumimos que no es Club Medical y mostramos el modal
+                    showModal();
+                    return;
+                }
+                
+                console.log(`Examen seleccionado: ${descripcion}, Precio: ${precio}, Tipo: ${tipo}`);
+                // Aquí puedes continuar con el proceso de agendamiento
+                alert(`Has seleccionado: ${descripcion}\nPrecio: $${precio.toFixed(2)}`);
+            }
+
+            // --- FUNCIÓN PARA CARGAR ESPECIALIDADES ---
+            async function cargarEspecialidades() {
+                const url = currentPatientId
+                    ? `http://localhost/turnosMedical/API/get_especialidades.php?idPersona=${currentPatientId}`
+                    : `http://localhost/turnosMedical/API/get_especialidades.php`;
+
+                try {
+                    const response = await fetch(url);
+                    const especialidades = await response.json();
+
+                    specialtiesGrid.innerHTML = ''; // Limpiamos
+
+                    especialidades.forEach(especialidad => {
+                        const card = document.createElement('div');
+                        const normalizedName = generarNombreImagen(especialidad.descEspecialidad);
+                        
+                        // Lógica especial para las categorías IMAGEN y LABORATORIO
+                        if (normalizedName === 'imagen' || normalizedName === 'laboratorio') {
+                            card.className = 'card-primary flex flex-col';
+                            card.style.height = '320px';
+                            const imageName = generarNombreImagen(especialidad.descEspecialidad);
+                            card.innerHTML = `
+                                <div class="flex-1 relative overflow-hidden rounded-t-xl">
+                                    <img src="images/${imageName}.png" alt="${especialidad.descEspecialidad}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <i class="fas ${normalizedName === 'imagen' ? 'fa-x-ray' : 'fa-flask'} text-5xl text-blue-800 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style="display: none;"></i>
+                                </div>
+                                <div class="p-4 text-center">
+                                    <h3 class="text-base font-bold text-gray-800 leading-tight mb-4">${especialidad.descEspecialidad}</h3>
+                                    <button class="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors">
+                                        Ver Exámenes
+                                    </button>
+                                </div>
+                            `;
+                            card.addEventListener('click', () => {
+                                if (normalizedName === 'imagen') {
+                                    cargarExamenes();
+                                } else if (normalizedName === 'laboratorio') {
+                                    cargarExamenesLaboratorio();
+                                }
+                                showScreen('screen-examenes');
+                            });
+                        } else {
+                            // Lógica para las demás especialidades con precios
+                            card.className = 'card-primary flex flex-col';
+                            card.style.height = '320px';
+                            card.dataset.id = especialidad.idEspecialidad;
+
+                            const imageName = generarNombreImagen(especialidad.descEspecialidad);
+
+                            // Verificar si es una especialidad con opciones múltiples
+                            const esEspecialidadConOpciones = esEspecialidadConOpcionesMultiples(especialidad.descEspecialidad);
+
+                            let preciosHTML = '<p class="text-sm text-red-500 mt-4">Precios no disponibles</p>'; // Mensaje por defecto
+                            
+                            if (especialidad.precios && especialidad.precios.particular) {
+                                if (esEspecialidadConOpciones) {
+                                    // Mostrar botón "Ver Opciones" para especialidades con múltiples opciones
+                                    preciosHTML = `
+                                        <div class="mt-3">
+                                            <button class="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors ver-opciones-btn" data-especialidad="${especialidad.idEspecialidad}">
+                                                Ver Opciones
+                                            </button>
+                                        </div>
+                                    `;
+                                } else {
+                                    // Mostrar precios directos para especialidades normales
+                                    const precios = especialidad.precios;
+                                    const precioRegular = precios.particular;
+                                    const precioClub = precios.clubMedical || 'N/A';
+
+                                    preciosHTML = `
+                                        <div class="mt-3 space-y-2">
+                                            <button class="w-full py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors precio-btn" data-tipo="regular" data-precio="${precioRegular}" data-especialidad="${especialidad.idEspecialidad}">
+                                                Precio particular: ${precioRegular}
+                                            </button>
+                                            <button class="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors precio-btn" data-tipo="club" data-precio="${precioClub}" data-especialidad="${especialidad.idEspecialidad}">
+                                                Club Medical: ${precioClub}
+                                            </button>
+                                        </div>
+                                    `;
+                                }
+                            }
+
+                            card.innerHTML = `
+                                <div class="flex-1 relative overflow-hidden rounded-t-xl">
+                                    <img src="images/${imageName}.png" alt="${especialidad.descEspecialidad}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <i class="fas fa-stethoscope text-5xl text-blue-800 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style="display: none;"></i>
+                                </div>
+                                <div class="p-4 text-center">
+                                    <h3 class="text-base font-bold text-gray-800 leading-tight">${especialidad.descEspecialidad}</h3>
+                                    ${preciosHTML}
+                                </div>
+                            `;
+                        }
+                        
+                        specialtiesGrid.appendChild(card);
+                    });
+
+                    // Agregar event listeners para los botones de precio (se deben re-asignar cada vez)
+                    document.querySelectorAll('.precio-btn').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            const tipo = btn.dataset.tipo;
+                            const precio = btn.dataset.precio;
+                            const especialidadId = btn.dataset.especialidad;
+
+                            if (tipo === 'club') {
+                                const especialidadData = especialidades.find(esp => esp.idEspecialidad == especialidadId);
+                                if (!especialidadData?.precios?.esClubMedical) {
+                                    showModal();
+                                    return;
+                                }
+                            }
+
+                            selectedEspecialidad = especialidadId;
+                            selectedPrecio = precio;
+                            selectedTipoPrecio = tipo;
+                            await cargarDoctores(especialidadId);
+                            showScreen('screen-doctores');
+                        });
+                    });
+
+                    // Agregar event listeners para los botones "Ver Opciones"
+                    document.querySelectorAll('.ver-opciones-btn').forEach(btn => {
+                        btn.addEventListener('click', async (e) => {
+                            e.stopPropagation();
+                            const especialidadId = btn.dataset.especialidad;
+                            const especialidadData = especialidades.find(esp => esp.idEspecialidad == especialidadId);
+                            
+                            if (especialidadData) {
+                                await mostrarOpcionesEspecialidad(especialidadData);
+                            }
+                        });
+                    });
+
+                } catch (error) {
+                    console.error('Error al cargar especialidades:', error);
+                    alert('Hubo un problema al cargar las especialidades.');
+                }
+            }
+
+            // --- FUNCIONES AUXILIARES PARA OPCIONES MÚLTIPLES ---
+            function esEspecialidadConOpcionesMultiples(descEspecialidad) {
+                const especialidadesConOpciones = [
+                    'PSICOLOGIA CLINICA',
+                    'PSICOLOGIA INFANTIL AND PSICORREHABILITADORA',
+                    'TERAPIA OCUPACIONAL AND MULTISENSORIAL',
+                    'TERAPIA DEL LENGUAJE',
+                    'NUTRICION'
+                ];
+                
+                const descNormalizada = descEspecialidad.toUpperCase();
+                return especialidadesConOpciones.some(esp => descNormalizada.includes(esp));
+            }
+
+            async function mostrarOpcionesEspecialidad(especialidad) {
+                // Crear modal para mostrar opciones
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-lg p-8 max-w-md mx-4">
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4">${especialidad.descEspecialidad}</h2>
+                        <p class="text-gray-600 mb-6">Selecciona una opción:</p>
+                        <div id="opciones-container" class="space-y-3 mb-6"></div>
+                        <button class="w-full bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors" onclick="this.closest('.fixed').remove()">
+                            Cancelar
+                        </button>
+                    </div>
+                `;
+
+                document.body.appendChild(modal);
+
+                const opcionesContainer = document.getElementById('opciones-container');
+                
+                // Definir opciones según la especialidad
+                let opciones = [];
+                
+                if (especialidad.descEspecialidad.toUpperCase().includes('PSICOLOGIA CLINICA')) {
+                    opciones = [
+                        { nombre: 'Consulta Psicología Clínica - Media Hora', idRegular: 680, idClub: 676 },
+                        { nombre: 'Consulta Psicología Clínica - Una Hora', idRegular: 866, idClub: 859 }
+                    ];
+                } else if (especialidad.descEspecialidad.toUpperCase().includes('PSICOLOGIA INFANTIL')) {
+                    opciones = [
+                        { nombre: 'Consulta Psicología Infantil - Media Hora', idRegular: 677, idClub: 673 },
+                        { nombre: 'Consulta Psicología Infantil - Una Hora', idRegular: 866, idClub: 859 }
+                    ];
+                } else if (especialidad.descEspecialidad.toUpperCase().includes('TERAPIA OCUPACIONAL')) {
+                    opciones = [
+                        { nombre: 'Terapia Ocupacional - Primera Sesión', idRegular: 683, idClub: 700 },
+                        { nombre: 'Terapia Ocupacional - Regular', idRegular: 683, idClub: 700 }
+                    ];
+                } else if (especialidad.descEspecialidad.toUpperCase().includes('TERAPIA DEL LENGUAJE')) {
+                    opciones = [
+                        { nombre: 'Terapia de Lenguaje - Primera Sesión', idRegular: 797, idClub: 865 },
+                        { nombre: 'Terapia de Lenguaje - Regular', idRegular: 682, idClub: 672 }
+                    ];
+                } else if (especialidad.descEspecialidad.toUpperCase().includes('NUTRICION')) {
+                    opciones = [
+                        { nombre: 'Consulta Nutrición - Primera Vez', idRegular: null, idClub: null },
+                        { nombre: 'Consulta Nutrición - Seguimiento', idRegular: null, idClub: null }
+                    ];
+                }
+
+                // Obtener precios para cada opción
+                for (const opcion of opciones) {
+                    try {
+                        const [precioRegular, precioClub] = await Promise.all([
+                            obtenerPrecioPorId(opcion.idRegular),
+                            obtenerPrecioPorId(opcion.idClub)
+                        ]);
+
+                        const opcionDiv = document.createElement('div');
+                        opcionDiv.className = 'border border-gray-200 rounded-lg p-4';
+                        opcionDiv.innerHTML = `
+                            <h3 class="font-semibold text-gray-800 mb-2">${opcion.nombre}</h3>
+                            <div class="space-y-2">
+                                <button class="w-full py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors opcion-btn" 
+                                        data-tipo="regular" data-precio="${precioRegular}" data-especialidad="${especialidad.idEspecialidad}">
+                                    Particular: ${precioRegular}
+                                </button>
+                                <button class="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors opcion-btn" 
+                                        data-tipo="club" data-precio="${precioClub}" data-especialidad="${especialidad.idEspecialidad}">
+                                    Club Medical: ${precioClub}
+                                </button>
+                            </div>
+                        `;
+
+                        opcionesContainer.appendChild(opcionDiv);
+                    } catch (error) {
+                        console.error(`Error obteniendo precios para ${opcion.nombre}:`, error);
+                    }
+                }
+
+                // Agregar event listeners a los botones de opciones
+                modal.querySelectorAll('.opcion-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        const tipo = btn.dataset.tipo;
+                        const precio = btn.dataset.precio;
+                        const especialidadId = btn.dataset.especialidad;
+
+                        if (tipo === 'club') {
+                            if (!especialidad.precios?.esClubMedical) {
+                                showModal();
+                                modal.remove();
+                                return;
+                            }
+                        }
+
+                        selectedEspecialidad = especialidadId;
+                        selectedPrecio = precio;
+                        selectedTipoPrecio = tipo;
+                        modal.remove();
+                        await cargarDoctores(especialidadId);
+                        showScreen('screen-doctores');
+                    });
+                });
+            }
+
+            // Función auxiliar para obtener precio por ID
+            async function obtenerPrecioPorId(idTipoServicio) {
+                try {
+                    const response = await fetch(`http://localhost/turnosMedical/API/get_especialidades.php`);
+                    const especialidades = await response.json();
+                    
+                    // Buscar en todas las especialidades el precio correspondiente
+                    for (const esp of especialidades) {
+                        if (esp.precios?.idTipoServicioRegular === idTipoServicio) {
+                            return esp.precios.particular;
+                        }
+                        if (esp.precios?.idTipoServicioClub === idTipoServicio) {
+                            return esp.precios.clubMedical;
+                        }
+                    }
+                    
+                    // Si no se encuentra, intentar obtener directamente de la API
+                    const precioResponse = await fetch(`http://localhost/turnosMedical/API/get_especialidades.php?servicioId=${idTipoServicio}`);
+                    const precioData = await precioResponse.json();
+                    
+                    return precioData.precio || 'N/A';
+                } catch (error) {
+                    console.error('Error obteniendo precio por ID:', error);
+                    return 'N/A';
+                }
+            }
+
+            // --- FUNCIÓN PARA VERIFICAR LA CÉDULA ---
+            async function verificarCedula() {
+                const cedula = cedulaInput.value;
+                if (cedula.length < 10) {
+                    alert('Por favor, ingresa un número de cédula válido.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`http://localhost/turnosMedical/API/verificar_paciente.php?cedula=${cedula}`);
+                    const data = await response.json();
+
+                    if (data.existe) {
+                        // Verificar si es ISSFA sin Club Medical (caso bloqueado)
+                        if (data.issfa && !data.clubMedical) {
+                            alert(`${data.nombre}, usted es paciente ISSFA, por favor acercarse a la ventanilla para agendar una cita.`);
+                            // No permitimos continuar con el proceso
+                            return;
+                        }
+
+                        // Para todos los demás casos (ISSFA con Club Medical, particulares), continuamos normalmente
+                        currentPatientId = data.idPersona; // Guardamos el ID del paciente
+                        currentPatientName = data.nombre;
+                        patientNameSpan.textContent = data.nombre;
+
+                        console.log('ID del paciente guardado:', currentPatientId);
+                        console.log('ISSFA:', data.issfa, 'Club Medical:', data.clubMedical);
+
+                        await cargarEspecialidades(); // Cargamos las especialidades
+                        showScreen('screen-especialidad'); // Y luego mostramos la pantalla
+                    } else {
+                        alert('Paciente no encontrado. Si eres nuevo, por favor regístrate.');
+                    }
+                } catch (error) {
+                    console.error('Error al conectar con la API:', error);
+                    alert('Hubo un problema al conectar con el sistema. Por favor, intenta más tarde.');
+                }
+            }
+
+            // --- EVENTOS DE BÚSQUEDA EN TIEMPO REAL ---
+            function inicializarBusqueda() {
+                const buscarInput = document.getElementById('buscar-examen');
+                const limpiarBtn = document.getElementById('limpiar-busqueda');
+                
+                if (!buscarInput) return;
+
+                // Evento de búsqueda en tiempo real
+                buscarInput.addEventListener('input', function() {
+                    const termino = this.value.trim();
+                    
+                    if (window.examenesCargados && window.examenesCargados.length > 0) {
+                        if (termino.length >= 2) {
+                            const resultados = buscarExamenes(termino, window.examenesCargados);
+                            renderizarExamenes(resultados, termino);
+                        } else if (termino.length === 0) {
+                            renderizarExamenes(window.examenesCargados);
+                        }
+                    }
+                });
+
+                // Evento para limpiar búsqueda
+                limpiarBtn.addEventListener('click', function() {
+                    buscarInput.value = '';
+                    buscarInput.focus();
+                    if (window.examenesCargados) {
+                        renderizarExamenes(window.examenesCargados);
+                    }
+                });
+
+                // Evento Enter para buscar
+                buscarInput.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        const termino = this.value.trim();
+                        if (termino.length >= 2 && window.examenesCargados) {
+                            const resultados = buscarExamenes(termino, window.examenesCargados);
+                            renderizarExamenes(resultados, termino);
+                        }
+                    }
+                });
+            }
+
+            // --- MODIFICAR FUNCIONES DE CARGA PARA INICIALIZAR BÚSQUEDA ---
+            async function cargarExamenes() {
+                const examenesGrid = document.getElementById('examenes-grid');
+                examenesGrid.className = 'w-full max-w-5xl space-y-3 mb-12';
+                examenesGrid.innerHTML = '<p class="text-gray-600">Cargando exámenes...</p>';
+
+                try {
+                    const response = await fetch('http://localhost/turnosMedical/API/get_examenes_eco.php');
+                    const examenes = await response.json();
+
+                    // Guardar exámenes en variable global para búsqueda
+                    window.examenesCargados = examenes;
+
+                    renderizarExamenes(examenes);
+                    inicializarBusqueda(); // Inicializar eventos de búsqueda
+
+                } catch (error) {
+                    console.error('Error al cargar exámenes:', error);
+                    examenesGrid.innerHTML = '<p class="text-red-600">Error al cargar los exámenes. Intente nuevamente.</p>';
+                }
+            }
+
+            async function cargarExamenesLaboratorio() {
+                const examenesGrid = document.getElementById('examenes-grid');
+                // Cambiamos el título de la pantalla
+                document.querySelector('#screen-examenes h1').textContent = 'Exámenes de Laboratorio';
+                document.querySelector('#screen-examenes p').textContent = 'Elige el examen que necesitas.';
+                
+                examenesGrid.className = 'w-full max-w-5xl space-y-3 mb-12';
+                examenesGrid.innerHTML = '<p class="text-gray-600">Cargando exámenes de laboratorio...</p>';
+
+                try {
+                    const response = await fetch('http://localhost/turnosMedical/API/get_examenes_laboratorio.php');
+                    const examenes = await response.json();
+
+                    // Guardar exámenes en variable global para búsqueda
+                    window.examenesCargados = examenes;
+
+                    renderizarExamenes(examenes);
+                    inicializarBusqueda(); // Inicializar eventos de búsqueda
+
+                } catch (error) {
+                    console.error('Error al cargar exámenes de laboratorio:', error);
+                    examenesGrid.innerHTML = '<p class="text-red-600">Error al cargar los exámenes de laboratorio. Intente nuevamente.</p>';
+                }
+            }
+
+            // --- ASIGNAR EVENTOS ---
+            verificarBtn.addEventListener('click', verificarCedula);
+            cedulaInput.addEventListener('keypress', function(event) {
+                if (event.key === 'Enter') {
+                    verificarCedula();
+                }
+            });
+
+            // --- INICIALIZACIÓN ---
+            showScreen('screen-cedula');
+        });
+    </script>
+</body>
+</html>
