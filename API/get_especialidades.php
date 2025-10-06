@@ -129,7 +129,7 @@ try {
         // ID: 68 - TERAPIA OCUPACIONAL Y MULTISENSORIAL
         68 => ['particular' => 683, 'club' => 700],
         // ID: 74 - ODONTOLOGÍA
-        74 => null,
+        74 => ['particular' => 826, 'club' => 826], // Usamos el mismo ID para ambos, el precio se maneja en el mapeo
         // ID: 76 - TERAPIA FÍSICA
         76 => ['particular' => 622, 'club' => 702],
         // ID: 82 - PSICOLOGÍA CLINICA

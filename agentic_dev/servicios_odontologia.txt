@@ -1,0 +1,43 @@
+Odontología
+
+"LISTA DE PRECIOS DE ODONTOLOGÍA
+""SUCURSAL QUITO-QUITUMBE"""			
+TRATAMIENTO	PARTICULAR	CLUB MEDICAL	ISSFA
+Consulta Externa	$5.00	$3.99	Gratis
+Limpieza	$20.00	$17.50	$15.00
+Limpieza+ Fluorización	$25.00	$22.50	$19.99
+Fluorización	$15.00	$13.00	$10.00
+Sellantes	$15.00	$13.00	$10.00
+Blanqueamiento dental + Limpieza	$85.00	$80.00	$75.00
+Restauración Simple	$20.00	$17.00	$15.00
+Restauracion compuesta	$25.00	$23.00	$20.00
+Restauración Compleja	$30.00	$27.00	$25.00
+Medicación Provisional	$17.00	$16.00	$14.50
+Incrustación Resina	$85.00	$80.00	$75.00
+Carillas Resina	$70.00	$65.00	$60.00
+Extraccion dental simple	$28.00	$25.00	$25.00
+Extraccion dental compleja	$35.00	$30.00	$30.00
+CIRUGIAS			
+Terceros molares	$50.00	$45.00	$45.00
+Terceros molares Incluidos	$70.00	$65.00	$65.00
+Alargamiento de coronas	$80.00	$75.00	$70.00
+Bichectomia	$250.00	$240.00	$235.00
+ENDODONCIA			
+Endodoncia Uniradicular	$150.00	$140.00	$130.00
+Endodoncia multiradicular	$180.00	$165.00	$150.00
+REHABILITACIÓN ORAL			
+Pernos de Fibra + Corona Porcelana	$180.00	$175.00	$150.00
+Coronas Metal Porcelana	$160.00	$155.00	$150.00
+Protesis total	$190.00	$185.00	$180.00
+Protesis parcial removible cromo cobalto	$220.00	$210.00	$200.00
+ODONTOPEDIATRIA			
+Pulpectomia	$125.00	$120.00	$115.00
+Mantenedor de espacio	$130.00	$125.00	$120.00
+Primera Consulta (General)	$5.00	$3.99	Gratis
+Consulta con Especialista	$30.00	$25.00	$20.00
+Sellantes	$15.00	$13.00	$10.00
+ORTODONCIA			
+Convencional	$160.00	$155.00	$150.00
+Control Convencional	$40.00	$35.00	$30.00
+Autoligado	$180.00	$175.00	$170.00
+Control Autoligado	$45.00	$42.00	$40.00
