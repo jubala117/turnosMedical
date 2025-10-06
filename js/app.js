@@ -362,7 +362,6 @@ class AppController {
         const optionName = Utils.crearElemento('div', 'flex-grow pr-4');
         optionName.innerHTML = `
             <p class="text-sm font-medium text-gray-700">${opcion.descripcion_bd}</p>
-            <p class="text-xs text-gray-500">ID: ${opcion.id_servicio}</p>
         `;
         
         const optionButtons = Utils.crearElemento('div', 'flex items-center space-x-2 flex-shrink-0');
