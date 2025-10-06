@@ -221,6 +221,63 @@
             let selectedPrecio = null;
             let selectedTipoPrecio = null; // 'regular' o 'club'
 
+            // --- Variables para manejo de búsqueda por área ---
+            let areaActual = null; // 'laboratorio', 'ecografia', 'odontologia'
+            let datosAreaActual = []; // Datos específicos del área actual
+
+            // --- FUNCIÓN PARA DETECTAR ÁREA ACTUAL ---
+            function detectarAreaActual() {
+                const titulo = document.getElementById('titulo-examenes').textContent;
+                const subtitulo = document.getElementById('subtitulo-examenes').textContent;
+                
+                if (titulo.includes('Laboratorio')) {
+                    return 'laboratorio';
+                } else if (titulo.includes('Imagenología') || titulo.includes('Ecografía')) {
+                    return 'ecografia';
+                } else if (titulo.includes('Odontológicos')) {
+                    return 'odontologia';
+                }
+                return 'laboratorio'; // Por defecto
+            }
+
+            // --- FUNCIÓN PARA ACTUALIZAR PLACEHOLDER ---
+            function actualizarPlaceholder() {
+                const buscarInput = document.getElementById('buscar-examen');
+                if (!buscarInput) return;
+                
+                areaActual = detectarAreaActual();
+                
+                const placeholders = {
+                    'laboratorio': '🔍 Buscar examen... Ej: glucosa, c p k, tiroides',
+                    'ecografia': '🔍 Buscar examen... Ej: abdomen, tiroides, mama',
+                    'odontologia': '🔍 Buscar servicio... Ej: limpieza, extracción, endodoncia'
+                };
+                
+                buscarInput.placeholder = placeholders[areaActual] || placeholders['laboratorio'];
+            }
+
+            // --- FUNCIÓN PARA RESETEAR BÚSQUEDA ---
+            function resetearBusqueda() {
+                const buscarInput = document.getElementById('buscar-examen');
+                const limpiarBusqueda = document.getElementById('limpiar-busqueda');
+                const contadorResultados = document.getElementById('contador-resultados');
+                
+                if (buscarInput) {
+                    buscarInput.value = '';
+                }
+                if (limpiarBusqueda) {
+                    limpiarBusqueda.classList.add('hidden');
+                }
+                if (contadorResultados) {
+                    contadorResultados.textContent = '';
+                }
+                
+                // Volver a mostrar todos los datos del área actual
+                if (datosAreaActual && datosAreaActual.length > 0) {
+                    renderizarExamenes(datosAreaActual);
+                }
+            }
+
             // --- FUNCIÓN AUXILIAR PARA FORMATEAR FECHA ---
             function fechaLetras(dateString) {
                 const dias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
@@ -378,7 +435,7 @@
                 // Mostrar botón de limpiar búsqueda si hay término de búsqueda
                 limpiarBusqueda.classList.toggle('hidden', !terminoBusqueda);
 
-                // Si hay búsqueda, mostrar resultados sin categorías
+                // Si hay búsqueda, mostrar SOLO resultados filtrados (sin categorías)
                 if (terminoBusqueda) {
                     examenes.forEach(examen => {
                         const listItem = document.createElement('div');
@@ -487,26 +544,52 @@
                             }
                         });
                     } else {
-                        // Para imagenología, mostrar sin categorías
+                        // Para imagenología y odontología, mostrar sin categorías
                         examenes.forEach(examen => {
                             const listItem = document.createElement('div');
                             listItem.className = 'w-full flex items-center bg-white p-3 rounded-lg shadow';
 
                             const nameDiv = document.createElement('div');
                             nameDiv.className = 'flex-grow pr-4';
-                            nameDiv.innerHTML = `<h3 class="text-md font-semibold text-gray-800">${examen.descripcion}</h3>`;
+                            // Para odontología, usar el campo correcto
+                            const nombreMostrar = examen.servicio || examen.descripcion;
+                            nameDiv.innerHTML = `<h3 class="text-md font-semibold text-gray-800">${nombreMostrar}</h3>`;
                             
                             const buttonsDiv = document.createElement('div');
                             buttonsDiv.className = 'flex items-center space-x-2 flex-shrink-0';
                             
-                            buttonsDiv.innerHTML = `
-                                <button class="py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors" onclick="seleccionarExamen('${examen.descripcion}', ${examen.precio_particular}, 'particular')">
-                                    Particular: ${examen.precio_particular.toFixed(2)}
-                                </button>
-                                <button class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors" onclick="seleccionarExamen('${examen.descripcion}', ${examen.precio_club}, 'club')">
-                                    Club: ${examen.precio_club.toFixed(2)}
-                                </button>
-                            `;
+                            // Para odontología, usar la función correcta
+                            if (areaActual === 'odontologia') {
+                                // En odontología, los datos vienen con opciones
+                                if (examen.encontrado && examen.opciones && examen.opciones.length > 0) {
+                                    // Mostrar la primera opción como representativa
+                                    const primeraOpcion = examen.opciones[0];
+                                    buttonsDiv.innerHTML = `
+                                        <button class="py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors" onclick="seleccionarServicioOdontologia('${primeraOpcion.descripcion_bd}', ${primeraOpcion.precio_particular}, 'particular')">
+                                            Particular: ${primeraOpcion.precio_particular.toFixed(2)}
+                                        </button>
+                                        <button class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors" onclick="seleccionarServicioOdontologia('${primeraOpcion.descripcion_bd}', ${primeraOpcion.precio_club}, 'club')">
+                                            Club: ${primeraOpcion.precio_club.toFixed(2)}
+                                        </button>
+                                    `;
+                                } else {
+                                    buttonsDiv.innerHTML = `
+                                        <button class="py-2 px-4 bg-gray-300 text-gray-500 rounded-lg text-sm font-medium cursor-not-allowed" disabled>
+                                            No disponible
+                                        </button>
+                                    `;
+                                }
+                            } else {
+                                // Para laboratorio y ecografía
+                                buttonsDiv.innerHTML = `
+                                    <button class="py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors" onclick="seleccionarExamen('${examen.descripcion}', ${examen.precio_particular}, 'particular')">
+                                        Particular: ${examen.precio_particular.toFixed(2)}
+                                    </button>
+                                    <button class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors" onclick="seleccionarExamen('${examen.descripcion}', ${examen.precio_club}, 'club')">
+                                        Club: ${examen.precio_club.toFixed(2)}
+                                    </button>
+                                `;
+                            }
 
                             listItem.appendChild(nameDiv);
                             listItem.appendChild(buttonsDiv);
@@ -593,7 +676,33 @@
                 "embarazo": ["gestación", "gestacion", "pregnancy", "prueba de embarazo", "beta hcg"],
                 "covid": ["coronavirus", "sars-cov-2", "covid19", "covid 19", "covid-19"],
                 "hepatitis": ["hep", "hepatitis a", "hepatitis b", "hepatitis c", "hepatitis viral"],
-                "vdrl": ["sífilis", "sifilis", "syphilis", "vdrl", "fta abs"]
+                "vdrl": ["sífilis", "sifilis", "syphilis", "vdrl", "fta abs"],
+                
+                // --- SINÓNIMOS ODONTOLÓGICOS ESPECÍFICOS ---
+                "limpieza": ["profilaxis", "limpieza dental", "limpieza bucal", "limpieza oral", "limpieza de dientes", "limpieza dental completa"],
+                "profilaxis": ["limpieza", "limpieza dental", "limpieza bucal", "limpieza oral", "limpieza de dientes"],
+                "extraccion": ["exodoncia", "extraer diente", "sacar diente", "extracción dental", "extraer muela", "sacar muela"],
+                "exodoncia": ["extraccion", "extracción", "extraer diente", "sacar diente", "extracción dental"],
+                "endodoncia": ["tratamiento de conducto", "conducto", "tratamiento endodóntico", "endodoncia dental"],
+                "tratamiento de conducto": ["endodoncia", "conducto", "tratamiento endodóntico", "endodoncia dental"],
+                "restauracion": ["empaste", "calza", "obturación", "restauración dental", "empaste dental", "calza dental"],
+                "empaste": ["restauracion", "restauración", "calza", "obturación", "restauración dental"],
+                "calza": ["restauracion", "restauración", "empaste", "obturación", "restauración dental"],
+                "carilla": ["carilla dental", "carillas", "carillas dentales", "veneer", "carilla estética"],
+                "blanqueamiento": ["blanqueamiento dental", "blanqueo", "blanqueo dental", "blanqueamiento estético"],
+                "fluor": ["flúor", "aplicación de flúor", "fluoruro", "tratamiento con flúor"],
+                "sellante": ["sellante dental", "selladores", "sellado dental", "sellante de fosas y fisuras"],
+                "consulta": ["consulta odontológica", "consulta dental", "revisión dental", "examen dental"],
+                "ortodoncia": ["brackets", "aparatos", "ortodoncia dental", "tratamiento ortodóntico"],
+                "brackets": ["ortodoncia", "aparatos", "ortodoncia dental", "tratamiento ortodóntico"],
+                "corona": ["corona dental", "fundas", "coronas", "corona protésica"],
+                "puente": ["puente dental", "puentes", "puente fijo", "puente protésico"],
+                "implante": ["implante dental", "implantes", "implante de diente", "implante protésico"],
+                "protesis": ["prótesis dental", "dentadura", "prótesis removible", "dentadura postiza"],
+                "periodoncia": ["enfermedad periodontal", "periodontitis", "gingivitis", "tratamiento periodontal"],
+                "cirugia": ["cirugía dental", "cirugía oral", "extracción quirúrgica", "cirugía bucal"],
+                "radiografia": ["radiografía dental", "rayos x dental", "radiografía bucal", "panorámica"],
+                "panoramica": ["radiografía panorámica", "ortopantomografía", "panorámica dental", "radiografía completa"]
             };
 
             // --- ALGORITMO DE BÚSQUEDA INTELIGENTE ---
@@ -933,42 +1042,69 @@
 
                             // Añadir servicios de la categoría
                             serviciosCategoria.forEach(servicio => {
-                                const listItem = document.createElement('div');
-                                listItem.className = 'w-full flex items-center bg-white p-3 rounded-lg shadow';
-
-                                // Columna 1: Nombre del Servicio
-                                const nameDiv = document.createElement('div');
-                                nameDiv.className = 'flex-grow pr-4';
-                                nameDiv.innerHTML = `
-                                    <h3 class="text-md font-semibold text-gray-800">${servicio.servicio}</h3>
+                                // Crear contenedor principal del servicio
+                                const serviceContainer = document.createElement('div');
+                                serviceContainer.className = 'bg-white rounded-lg shadow mb-4 overflow-hidden';
+                                
+                                // Título del servicio (sin precio)
+                                const serviceHeader = document.createElement('div');
+                                serviceHeader.className = 'bg-gray-50 px-4 py-3 border-b border-gray-200';
+                                serviceHeader.innerHTML = `
+                                    <h3 class="text-lg font-bold text-gray-800">${servicio.servicio}</h3>
                                     ${servicio.encontrado ? '' : '<p class="text-xs text-red-500 mt-1">⚠️ Servicio no encontrado en BD</p>'}
                                     ${servicio.total_opciones > 1 ? `<p class="text-xs text-blue-600 mt-1">${servicio.total_opciones} opciones disponibles</p>` : ''}
                                 `;
                                 
-                                // Columna 2: Botones de Selección
-                                const buttonsDiv = document.createElement('div');
-                                buttonsDiv.className = 'flex items-center space-x-2 flex-shrink-0';
+                                serviceContainer.appendChild(serviceHeader);
+                                
+                                // Contenedor para las opciones
+                                const optionsContainer = document.createElement('div');
+                                optionsContainer.className = 'space-y-2 p-4';
                                 
                                 if (servicio.encontrado) {
-                                    buttonsDiv.innerHTML = `
-                                        <button class="py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors" onclick="seleccionarServicioOdontologia('${servicio.servicio}', ${servicio.precio_particular_min}, 'particular')">
-                                            Particular: ${servicio.precio_particular_min.toFixed(2)}
-                                        </button>
-                                        <button class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors" onclick="seleccionarServicioOdontologia('${servicio.servicio}', ${servicio.precio_club_min}, 'club')">
-                                            Club: ${servicio.precio_club_min.toFixed(2)}
-                                        </button>
-                                    `;
+                                    // Mostrar todas las opciones individuales
+                                    servicio.opciones.forEach((opcion, index) => {
+                                        const optionItem = document.createElement('div');
+                                        optionItem.className = 'flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg';
+                                        
+                                        // Nombre de la opción específica
+                                        const optionName = document.createElement('div');
+                                        optionName.className = 'flex-grow pr-4';
+                                        optionName.innerHTML = `
+                                            <p class="text-sm font-medium text-gray-700">${opcion.descripcion_bd}</p>
+                                            <p class="text-xs text-gray-500">ID: ${opcion.id_servicio}</p>
+                                        `;
+                                        
+                                        // Botones de selección para esta opción específica
+                                        const optionButtons = document.createElement('div');
+                                        optionButtons.className = 'flex items-center space-x-2 flex-shrink-0';
+                                        optionButtons.innerHTML = `
+                                            <button class="py-1 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded text-xs font-medium transition-colors" onclick="seleccionarServicioOdontologia('${opcion.descripcion_bd}', ${opcion.precio_particular}, 'particular')">
+                                                Particular: ${opcion.precio_particular.toFixed(2)}
+                                            </button>
+                                            <button class="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold transition-colors" onclick="seleccionarServicioOdontologia('${opcion.descripcion_bd}', ${opcion.precio_club}, 'club')">
+                                                Club: ${opcion.precio_club.toFixed(2)}
+                                            </button>
+                                        `;
+                                        
+                                        optionItem.appendChild(optionName);
+                                        optionItem.appendChild(optionButtons);
+                                        optionsContainer.appendChild(optionItem);
+                                    });
                                 } else {
-                                    buttonsDiv.innerHTML = `
+                                    // Servicio no encontrado
+                                    const notFoundMessage = document.createElement('div');
+                                    notFoundMessage.className = 'text-center py-4';
+                                    notFoundMessage.innerHTML = `
                                         <button class="py-2 px-4 bg-gray-300 text-gray-500 rounded-lg text-sm font-medium cursor-not-allowed" disabled>
                                             No disponible
                                         </button>
                                     `;
+                                    optionsContainer.appendChild(notFoundMessage);
                                 }
-
-                                listItem.appendChild(nameDiv);
-                                listItem.appendChild(buttonsDiv);
-                                examenesGrid.appendChild(listItem);
+                                
+                                serviceContainer.appendChild(optionsContainer);
+                                examenesGrid.appendChild(serviceContainer);
                             });
                         }
                     });
@@ -1346,7 +1482,7 @@
                 }
             }
 
-            // --- EVENTOS DE BÚSQUEDA EN TIEMPO REAL ---
+            // --- EVENTOS DE BÚSQUEDA EN TIEMPO REAL POR ÁREA ---
             function inicializarBusqueda() {
                 const buscarInput = document.getElementById('buscar-examen');
                 const limpiarBtn = document.getElementById('limpiar-busqueda');
@@ -1357,12 +1493,12 @@
                 buscarInput.addEventListener('input', function() {
                     const termino = this.value.trim();
                     
-                    if (window.examenesCargados && window.examenesCargados.length > 0) {
+                    if (datosAreaActual && datosAreaActual.length > 0) {
                         if (termino.length >= 2) {
-                            const resultados = buscarExamenes(termino, window.examenesCargados);
+                            const resultados = buscarExamenes(termino, datosAreaActual);
                             renderizarExamenes(resultados, termino);
                         } else if (termino.length === 0) {
-                            renderizarExamenes(window.examenesCargados);
+                            renderizarExamenes(datosAreaActual);
                         }
                     }
                 });
@@ -1371,8 +1507,8 @@
                 limpiarBtn.addEventListener('click', function() {
                     buscarInput.value = '';
                     buscarInput.focus();
-                    if (window.examenesCargados) {
-                        renderizarExamenes(window.examenesCargados);
+                    if (datosAreaActual) {
+                        renderizarExamenes(datosAreaActual);
                     }
                 });
 
@@ -1380,15 +1516,15 @@
                 buscarInput.addEventListener('keypress', function(event) {
                     if (event.key === 'Enter') {
                         const termino = this.value.trim();
-                        if (termino.length >= 2 && window.examenesCargados) {
-                            const resultados = buscarExamenes(termino, window.examenesCargados);
+                        if (termino.length >= 2 && datosAreaActual) {
+                            const resultados = buscarExamenes(termino, datosAreaActual);
                             renderizarExamenes(resultados, termino);
                         }
                     }
                 });
             }
 
-            // --- MODIFICAR FUNCIONES DE CARGA PARA INICIALIZAR BÚSQUEDA ---
+            // --- MODIFICAR FUNCIONES DE CARGA PARA INICIALIZAR BÚSQUEDA POR ÁREA ---
             async function cargarExamenes() {
                 const examenesGrid = document.getElementById('examenes-grid');
                 examenesGrid.className = 'w-full max-w-5xl space-y-3 mb-12';
@@ -1400,8 +1536,12 @@
 
                     // Guardar exámenes en variable global para búsqueda
                     window.examenesCargados = examenes;
+                    datosAreaActual = examenes;
+                    areaActual = 'ecografia';
 
+                    resetearBusqueda(); // Resetear búsqueda al cambiar de área
                     renderizarExamenes(examenes);
+                    actualizarPlaceholder(); // Actualizar placeholder según área
                     inicializarBusqueda(); // Inicializar eventos de búsqueda
 
                 } catch (error) {
@@ -1425,13 +1565,160 @@
 
                     // Guardar exámenes en variable global para búsqueda
                     window.examenesCargados = examenes;
+                    datosAreaActual = examenes;
+                    areaActual = 'laboratorio';
 
+                    resetearBusqueda(); // Resetear búsqueda al cambiar de área
                     renderizarExamenes(examenes);
+                    actualizarPlaceholder(); // Actualizar placeholder según área
                     inicializarBusqueda(); // Inicializar eventos de búsqueda
 
                 } catch (error) {
                     console.error('Error al cargar exámenes de laboratorio:', error);
                     examenesGrid.innerHTML = '<p class="text-red-600">Error al cargar los exámenes de laboratorio. Intente nuevamente.</p>';
+                }
+            }
+
+            // --- MODIFICAR FUNCIÓN DE CARGA DE SERVICIOS ODONTOLÓGICOS ---
+            async function cargarServiciosOdontologia() {
+                const examenesGrid = document.getElementById('examenes-grid');
+                // Cambiamos el título de la pantalla
+                document.querySelector('#screen-examenes h1').textContent = 'Servicios Odontológicos';
+                document.querySelector('#screen-examenes p').textContent = 'Elige el servicio dental que necesitas.';
+                
+                examenesGrid.className = 'w-full max-w-5xl space-y-3 mb-12';
+                examenesGrid.innerHTML = '<p class="text-gray-600">Cargando servicios odontológicos...</p>';
+
+                try {
+                    const response = await fetch('http://localhost/turnosMedical/API/get_servicios_odontologia.php');
+                    const servicios = await response.json();
+
+                    // Guardar servicios en variable global para búsqueda
+                    window.examenesCargados = servicios;
+                    datosAreaActual = servicios;
+                    areaActual = 'odontologia';
+
+                    resetearBusqueda(); // Resetear búsqueda al cambiar de área
+                    examenesGrid.innerHTML = ''; // Limpiar mensaje de carga
+
+                    if (servicios.length === 0) {
+                        examenesGrid.innerHTML = '<p class="text-gray-600">No hay servicios odontológicos disponibles.</p>';
+                        return;
+                    }
+
+                    // Agrupar servicios por categorías
+                    const categorias = {
+                        'CONSULTAS Y PREVENCIÓN': [],
+                        'RESTAURACIONES': [],
+                        'ENDODONCIA': [],
+                        'EXTRACCIONES': [],
+                        'ORTODONCIA': [],
+                        'OTROS SERVICIOS': []
+                    };
+
+                    // Clasificar servicios por categorías
+                    servicios.forEach(servicio => {
+                        const nombre = servicio.servicio.toUpperCase();
+                        
+                        if (nombre.includes('CONSULTA') || nombre.includes('LIMPIEZA') || nombre.includes('FLUOR') || nombre.includes('SELLANTE')) {
+                            categorias['CONSULTAS Y PREVENCIÓN'].push(servicio);
+                        } else if (nombre.includes('RESTAURACIÓN') || nombre.includes('CARILLA') || nombre.includes('BLANQUEAMIENTO')) {
+                            categorias['RESTAURACIONES'].push(servicio);
+                        } else if (nombre.includes('ENDODONCIA') || nombre.includes('PULPECTOMIA')) {
+                            categorias['ENDODONCIA'].push(servicio);
+                        } else if (nombre.includes('EXTRACCIÓN') || nombre.includes('MOLAR') || nombre.includes('ALARGAMIENTO')) {
+                            categorias['EXTRACCIONES'].push(servicio);
+                        } else if (nombre.includes('CONTROL') || nombre.includes('ORTODONCIA')) {
+                            categorias['ORTODONCIA'].push(servicio);
+                        } else {
+                            categorias['OTROS SERVICIOS'].push(servicio);
+                        }
+                    });
+
+                    // Mostrar servicios por categorías
+                    Object.entries(categorias).forEach(([categoria, serviciosCategoria]) => {
+                        if (serviciosCategoria.length > 0) {
+                            // Añadir título de categoría
+                            const tituloCategoria = document.createElement('h2');
+                            tituloCategoria.className = 'text-2xl font-bold text-gray-700 mt-6 mb-2 pt-4 border-t';
+                            tituloCategoria.textContent = categoria;
+                            examenesGrid.appendChild(tituloCategoria);
+
+                            // Añadir servicios de la categoría
+                            serviciosCategoria.forEach(servicio => {
+                                // Crear contenedor principal del servicio
+                                const serviceContainer = document.createElement('div');
+                                serviceContainer.className = 'bg-white rounded-lg shadow mb-4 overflow-hidden';
+                                
+                                // Título del servicio (sin precio)
+                                const serviceHeader = document.createElement('div');
+                                serviceHeader.className = 'bg-gray-50 px-4 py-3 border-b border-gray-200';
+                                serviceHeader.innerHTML = `
+                                    <h3 class="text-lg font-bold text-gray-800">${servicio.servicio}</h3>
+                                    ${servicio.encontrado ? '' : '<p class="text-xs text-red-500 mt-1">⚠️ Servicio no encontrado en BD</p>'}
+                                    ${servicio.total_opciones > 1 ? `<p class="text-xs text-blue-600 mt-1">${servicio.total_opciones} opciones disponibles</p>` : ''}
+                                `;
+                                
+                                serviceContainer.appendChild(serviceHeader);
+                                
+                                // Contenedor para las opciones
+                                const optionsContainer = document.createElement('div');
+                                optionsContainer.className = 'space-y-2 p-4';
+                                
+                                if (servicio.encontrado) {
+                                    // Mostrar todas las opciones individuales
+                                    servicio.opciones.forEach((opcion, index) => {
+                                        const optionItem = document.createElement('div');
+                                        optionItem.className = 'flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg';
+                                        
+                                        // Nombre de la opción específica
+                                        const optionName = document.createElement('div');
+                                        optionName.className = 'flex-grow pr-4';
+                                        optionName.innerHTML = `
+                                            <p class="text-sm font-medium text-gray-700">${opcion.descripcion_bd}</p>
+                                            <p class="text-xs text-gray-500">ID: ${opcion.id_servicio}</p>
+                                        `;
+                                        
+                                        // Botones de selección para esta opción específica
+                                        const optionButtons = document.createElement('div');
+                                        optionButtons.className = 'flex items-center space-x-2 flex-shrink-0';
+                                        optionButtons.innerHTML = `
+                                            <button class="py-1 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded text-xs font-medium transition-colors" onclick="seleccionarServicioOdontologia('${opcion.descripcion_bd}', ${opcion.precio_particular}, 'particular')">
+                                                Particular: ${opcion.precio_particular.toFixed(2)}
+                                            </button>
+                                            <button class="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold transition-colors" onclick="seleccionarServicioOdontologia('${opcion.descripcion_bd}', ${opcion.precio_club}, 'club')">
+                                                Club: ${opcion.precio_club.toFixed(2)}
+                                            </button>
+                                        `;
+                                        
+                                        optionItem.appendChild(optionName);
+                                        optionItem.appendChild(optionButtons);
+                                        optionsContainer.appendChild(optionItem);
+                                    });
+                                } else {
+                                    // Servicio no encontrado
+                                    const notFoundMessage = document.createElement('div');
+                                    notFoundMessage.className = 'text-center py-4';
+                                    notFoundMessage.innerHTML = `
+                                        <button class="py-2 px-4 bg-gray-300 text-gray-500 rounded-lg text-sm font-medium cursor-not-allowed" disabled>
+                                            No disponible
+                                        </button>
+                                    `;
+                                    optionsContainer.appendChild(notFoundMessage);
+                                }
+                                
+                                serviceContainer.appendChild(optionsContainer);
+                                examenesGrid.appendChild(serviceContainer);
+                            });
+                        }
+                    });
+
+                    actualizarPlaceholder(); // Actualizar placeholder según área
+                    inicializarBusqueda(); // Inicializar eventos de búsqueda
+
+                } catch (error) {
+                    console.error('Error al cargar servicios odontológicos:', error);
+                    examenesGrid.innerHTML = '<p class="text-red-600">Error al cargar los servicios odontológicos. Intente nuevamente.</p>';
                 }
             }
 
