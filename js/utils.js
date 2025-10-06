@@ -89,6 +89,7 @@ class Utils {
     // Mostrar mensaje de error
     static mostrarError(mensaje) {
         console.error('Error:', mensaje);
+        console.trace('Stack trace del error:'); // Para identificar qué función está llamando a mostrarError
         alert(mensaje);
     }
 
@@ -125,6 +126,12 @@ class Utils {
 
     // Mostrar pantalla
     static mostrarPantalla(screenId) {
+        // Limpiar búsqueda si estamos saliendo de pantalla de exámenes
+        const pantallaActual = document.querySelector('.screen.active');
+        if (pantallaActual && pantallaActual.id === 'screen-examenes' && screenId !== 'screen-examenes') {
+            Utils.limpiarBusquedaCompleta();
+        }
+        
         document.querySelectorAll('.screen').forEach(screen => {
             screen.classList.remove('active');
         });
@@ -178,6 +185,19 @@ class Utils {
         }
         if (contadorResultados) {
             contadorResultados.textContent = '';
+        }
+    }
+
+    // Limpiar búsqueda completamente (incluye renderizado)
+    static limpiarBusquedaCompleta() {
+        Utils.resetearBusqueda();
+        
+        // Si estamos en pantalla de exámenes, renderizar todos los datos
+        if (document.getElementById('screen-examenes')?.classList.contains('active')) {
+            const datosAreaActual = window.datosAreaActual || [];
+            if (datosAreaActual.length > 0) {
+                AppController.renderizarExamenes(datosAreaActual);
+            }
         }
     }
 }

@@ -88,10 +88,28 @@ class AppController {
     // Cargar doctores por especialidad
     static async cargarDoctores(idEspecialidad) {
         try {
+            console.log('🔍 Cargando doctores para especialidad:', idEspecialidad);
+            
+            // Verificar que el elemento de doctores existe
+            if (!UIManager.elementos.doctoresGrid) {
+                console.error('❌ Elemento doctors-grid no encontrado en UIManager.elementos');
+                // Intentar encontrar el elemento directamente
+                const doctorsGrid = document.getElementById('doctors-grid');
+                if (doctorsGrid) {
+                    UIManager.elementos.doctoresGrid = doctorsGrid;
+                    console.log('✅ Elemento doctors-grid encontrado directamente');
+                } else {
+                    console.error('❌ Elemento doctors-grid no existe en el DOM');
+                    Utils.mostrarError('Error: Pantalla de doctores no disponible');
+                    return;
+                }
+            }
+            
             const doctores = await ApiService.obtenerDoctores(idEspecialidad);
             UIManager.renderizarDoctores(doctores);
             Utils.mostrarPantalla('screen-doctores');
         } catch (error) {
+            console.error('❌ Error en cargarDoctores:', error);
             Utils.mostrarError(error.message);
         }
     }
@@ -152,6 +170,9 @@ class AppController {
 
     // Configurar pantalla de exámenes
     static configurarPantallaExamenes(titulo, subtitulo, datos, area) {
+        // Limpiar búsqueda antes de configurar nueva área
+        Utils.limpiarBusquedaCompleta();
+        
         // Actualizar títulos
         document.querySelector('#screen-examenes h1').textContent = titulo;
         document.querySelector('#screen-examenes p').textContent = subtitulo;
@@ -177,6 +198,12 @@ class AppController {
         const contadorResultados = document.getElementById('contador-resultados');
         const limpiarBusqueda = document.getElementById('limpiar-busqueda');
         
+        console.log('🔍 renderizarExamenes llamado:', {
+            examenesRecibidos: examenes.length,
+            terminoBusqueda: terminoBusqueda,
+            datosAreaActual: window.datosAreaActual?.length || 0
+        });
+        
         Utils.limpiarContenedor(examenesGrid);
 
         if (examenes.length === 0) {
@@ -197,12 +224,15 @@ class AppController {
             limpiarBusqueda.classList.toggle('hidden', !terminoBusqueda);
         }
 
+        // IMPORTANTE: Siempre usar los examenes recibidos como parámetro, no window.datosAreaActual
         // Renderizar según el área y si hay búsqueda
         if (terminoBusqueda) {
             // Con búsqueda: mostrar todos los resultados sin categorías
+            console.log('📋 Renderizando con búsqueda:', terminoBusqueda, 'resultados:', examenes.length);
             AppController.renderizarResultadosBusqueda(examenes, examenesGrid);
         } else {
             // Sin búsqueda: mostrar por categorías según el área
+            console.log('📋 Renderizando sin búsqueda, categorías');
             AppController.renderizarPorCategorias(examenes, examenesGrid);
         }
     }
@@ -219,6 +249,12 @@ class AppController {
     static renderizarPorCategorias(examenes, contenedor) {
         const area = UIManager.estado.areaActual;
         
+        console.log('📋 Renderizando por categorías:', {
+            area: area,
+            examenesRecibidos: examenes.length,
+            datosAreaActual: window.datosAreaActual?.length || 0
+        });
+        
         if (area === 'laboratorio') {
             const categorias = SearchEngine.clasificarExamenesPorCategoria(examenes, area);
             AppController.renderizarCategoriasLaboratorio(categorias, contenedor);
@@ -227,6 +263,7 @@ class AppController {
             AppController.renderizarCategoriasOdontologia(categorias, contenedor);
         } else {
             // Para imagenología, mostrar sin categorías
+            console.log('📋 Renderizando imagenología sin categorías:', examenes.length, 'exámenes');
             AppController.renderizarResultadosBusqueda(examenes, contenedor);
         }
     }

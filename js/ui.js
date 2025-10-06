@@ -35,8 +35,23 @@ class UIManager {
             doctorsGrid: document.getElementById('doctors-grid'),
             datesGrid: document.getElementById('dates-grid'),
             hoursGrid: document.getElementById('hours-grid'),
-            examenesGrid: document.getElementById('examenes-grid')
+            examenesGrid: document.getElementById('examenes-grid'),
+            errorMessage: document.getElementById('error-message'),
+            successMessage: document.getElementById('success-message'),
+            buscarInput: document.getElementById('buscar-examen'),
+            limpiarBusqueda: document.getElementById('limpiar-busqueda'),
+            contadorResultados: document.getElementById('contador-resultados'),
+            tituloExamenes: document.getElementById('titulo-examenes'),
+            subtituloExamenes: document.getElementById('subtitulo-examenes')
         };
+
+        // Validar que los elementos críticos existan
+        const elementosCriticos = ['specialtiesGrid', 'doctorsGrid', 'datesGrid', 'hoursGrid', 'examenesGrid'];
+        elementosCriticos.forEach(elemento => {
+            if (!UIManager.elementos[elemento]) {
+                console.error(`❌ Elemento crítico no encontrado: ${elemento}`);
+            }
+        });
     }
 
     // Renderizar especialidades

@@ -128,16 +128,43 @@ class SearchEngine {
         }));
 
         // Filtrar resultados con puntaje significativo y ordenar
-        return resultadosConPuntaje
-            .filter(resultado => resultado.puntaje > 50)
+        // Umbral más alto para Ecografía (nombres más largos y específicos)
+        const area = UIManager.estado.areaActual || 'laboratorio';
+        const umbral = area === 'ecografia' ? 150 : 50;
+        
+        console.log('🎯 Filtrado por área:', {
+            area: area,
+            umbral: umbral,
+            resultadosAntesFiltro: resultadosConPuntaje.length
+        });
+
+        const resultadosFiltrados = resultadosConPuntaje
+            .filter(resultado => resultado.puntaje > umbral)
             .sort((a, b) => b.puntaje - a.puntaje)
             .map(resultado => resultado.examen);
+
+        console.log('🎯 Resultados después de filtro:', {
+            umbral: umbral,
+            resultadosFiltrados: resultadosFiltrados.length
+        });
+
+        return resultadosFiltrados;
     }
 
     // Búsqueda con debouncing
     static crearBuscadorDebounced(callback, wait = 300) {
         return Utils.debounce((termino, datos) => {
+            console.log('🔍 Buscador debounced ejecutado:', {
+                termino: termino,
+                datosRecibidos: datos.length,
+                datosAreaActual: window.datosAreaActual?.length || 0
+            });
             const resultados = SearchEngine.buscarExamenes(termino, datos);
+            console.log('📊 Resultados de búsqueda:', {
+                termino: termino,
+                resultadosFiltrados: resultados.length,
+                datosOriginales: datos.length
+            });
             callback(resultados, termino);
         }, wait);
     }
@@ -236,7 +263,7 @@ class SearchEngine {
                 if (termino.length >= 2) {
                     buscadorDebounced(termino, datosAreaActual);
                 } else if (termino.length === 0) {
-                    callbackRenderizado(datosAreaActual);
+                    callbackRenderizado(datosAreaActual, '');
                 }
             }
         });
@@ -248,7 +275,7 @@ class SearchEngine {
                 buscarInput.focus();
                 const datosAreaActual = window.datosAreaActual || [];
                 if (datosAreaActual) {
-                    callbackRenderizado(datosAreaActual);
+                    callbackRenderizado(datosAreaActual, '');
                 }
             });
         }
