@@ -41,15 +41,23 @@ class AppController {
     static async verificarCedula() {
         const cedula = UIManager.elementos.cedulaInput.value;
         
-        if (!Utils.validarCedula(cedula)) {
-            Utils.mostrarError('Por favor, ingresa un número de cédula válido.');
+        // Validar cédula usando DataValidator
+        const validation = DataValidator.validarCedula(cedula);
+        if (!validation.valid) {
+            Utils.mostrarError(validation.message);
             return;
         }
 
         try {
-            const data = await ApiService.verificarPaciente(cedula);
+            const data = await ApiService.verificarPaciente(validation.value);
+
+            // Validar respuesta de API
+            DataValidator.validateApiResponse(data, ['existe']);
 
             if (data.existe) {
+                // Validar campos requeridos cuando existe el paciente
+                DataValidator.validateApiResponse(data, ['idPersona', 'nombre']);
+
                 // Verificar si es ISSFA sin Club Medical (caso bloqueado)
                 if (data.issfa && !data.clubMedical) {
                     Utils.mostrarError(`${data.nombre}, usted es paciente ISSFA, por favor acercarse a la ventanilla para agendar una cita.`);
@@ -61,16 +69,14 @@ class AppController {
                 UIManager.estado.currentPatientName = data.nombre;
                 UIManager.elementos.patientNameSpan.textContent = data.nombre;
 
-                console.log('ID del paciente guardado:', UIManager.estado.currentPatientId);
-                console.log('ISSFA:', data.issfa, 'Club Medical:', data.clubMedical);
+                Logger.success('Paciente verificado:', { id: data.idPersona, issfa: data.issfa, clubMedical: data.clubMedical });
 
                 await AppController.cargarEspecialidades();
             } else {
                 Utils.mostrarError('Paciente no encontrado. Si eres nuevo, por favor regístrate.');
             }
         } catch (error) {
-            console.error('Error al conectar con la API:', error);
-            Utils.mostrarError('Hubo un problema al conectar con el sistema. Por favor, intenta más tarde.');
+            ErrorHandler.handle(error, 'verificarCedula');
         }
     }
 
@@ -378,7 +384,7 @@ class AppController {
         `;
         
         const optionButtons = Utils.crearElemento('div', 'flex items-center space-x-2 flex-shrink-0');
-        optionButtons.innerHTML = AppController.crearBotonesPrecioOdontologia(opcion);
+        optionButtons.innerHTML = AppController.crearBotonesPrecio(opcion, 'odontologia');
         
         optionItem.appendChild(optionName);
         optionItem.appendChild(optionButtons);
@@ -386,26 +392,25 @@ class AppController {
         return optionItem;
     }
 
-    // Crear botones de precio para exámenes
-    static crearBotonesPrecio(examen) {
+    // Crear botones de precio (unificado para exámenes y odontología)
+    static crearBotonesPrecio(item, tipo = 'examen') {
+        // Determinar descripción y función según el tipo
+        const descripcion = tipo === 'odontologia' ? item.descripcion_bd : item.descripcion;
+        const funcionSeleccion = tipo === 'odontologia' ? 'seleccionarServicioOdontologia' : 'seleccionarExamen';
+        
+        // Determinar tamaño de botones según el tipo
+        const sizeClasses = tipo === 'odontologia' 
+            ? 'py-1 px-3 rounded text-xs'  // Más pequeño para odontología
+            : 'py-2 px-4 rounded-lg text-sm'; // Normal para exámenes
+        
         return `
-            <button class="py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors" onclick="AppController.seleccionarExamen('${examen.descripcion}', ${examen.precio_particular}, 'particular')">
-                Particular: ${examen.precio_particular.toFixed(2)}
+            <button class="${sizeClasses} bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium transition-colors" 
+                    onclick="AppController.${funcionSeleccion}('${descripcion}', ${item.precio_particular}, 'particular')">
+                Particular: ${item.precio_particular.toFixed(2)}
             </button>
-            <button class="py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors" onclick="AppController.seleccionarExamen('${examen.descripcion}', ${examen.precio_club}, 'club')">
-                Club: ${examen.precio_club.toFixed(2)}
-            </button>
-        `;
-    }
-
-    // Crear botones de precio para odontología
-    static crearBotonesPrecioOdontologia(opcion) {
-        return `
-            <button class="py-1 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded text-xs font-medium transition-colors" onclick="AppController.seleccionarServicioOdontologia('${opcion.descripcion_bd}', ${opcion.precio_particular}, 'particular')">
-                Particular: ${opcion.precio_particular.toFixed(2)}
-            </button>
-            <button class="py-1 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold transition-colors" onclick="AppController.seleccionarServicioOdontologia('${opcion.descripcion_bd}', ${opcion.precio_club}, 'club')">
-                Club: ${opcion.precio_club.toFixed(2)}
+            <button class="${sizeClasses} bg-blue-600 hover:bg-blue-700 text-white font-bold transition-colors" 
+                    onclick="AppController.${funcionSeleccion}('${descripcion}', ${item.precio_club}, 'club')">
+                Club: ${item.precio_club.toFixed(2)}
             </button>
         `;
     }

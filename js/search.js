@@ -2,7 +2,11 @@
 
 class SearchEngine {
     // Verificar coincidencia fuzzy
-    static esCoincidenciaFuzzy(terminoBusqueda, terminoExamen, umbral = CONFIG.SEARCH_THRESHOLD) {
+    static esCoincidenciaFuzzy(terminoBusqueda, terminoExamen, umbral) {
+        // Usar umbral por defecto si no se proporciona
+        if (umbral === undefined) {
+            umbral = (typeof CONFIG !== 'undefined' && CONFIG.SEARCH_THRESHOLD) ? CONFIG.SEARCH_THRESHOLD : 0.7;
+        }
         const distancia = Utils.calcularDistanciaLevenshtein(terminoBusqueda, terminoExamen);
         const longitudMaxima = Math.max(terminoBusqueda.length, terminoExamen.length);
         const similitud = 1 - (distancia / longitudMaxima);
@@ -38,37 +42,43 @@ class SearchEngine {
         return Array.from(terminosExpandidos);
     }
 
-    // Calcular puntaje de búsqueda
-    static calcularPuntajeBusqueda(busqueda, examen) {
-        let puntaje = 0;
-        const busquedaNormalizada = Utils.normalizarTexto(busqueda);
+    // Calcular puntaje por coincidencia exacta
+    static calcularPuntajeExacto(busquedaNormalizada, examenNormalizadoOriginal, examenNormalizadoVisible) {
+        const scores = (typeof CONFIG !== 'undefined' && CONFIG.SEARCH_SCORES) ? CONFIG.SEARCH_SCORES : {
+            EXACT_MATCH: 1000
+        };
         
-        // Buscar tanto en descripcion original como en descripcion_visible
-        const descripcionOriginal = examen.descripcion || '';
-        const descripcionVisible = examen.descripcion_visible || '';
-        
-        const examenNormalizadoOriginal = Utils.normalizarTexto(descripcionOriginal);
-        const examenNormalizadoVisible = Utils.normalizarTexto(descripcionVisible);
-        
-        const componentesBusqueda = Utils.extraerComponentes(busqueda);
-        const componentesExamenOriginal = Utils.extraerComponentes(descripcionOriginal);
-        const componentesExamenVisible = Utils.extraerComponentes(descripcionVisible);
-
-        // 1. Coincidencia exacta (máxima prioridad)
         if (examenNormalizadoOriginal === busquedaNormalizada || examenNormalizadoVisible === busquedaNormalizada) {
-            puntaje += 1000;
+            return scores.EXACT_MATCH || 1000;
         }
+        return 0;
+    }
 
-        // 2. Coincidencia parcial (substring) - en ambos campos
+    // Calcular puntaje por substring
+    static calcularPuntajeSubstring(busquedaNormalizada, examenNormalizadoOriginal, examenNormalizadoVisible) {
+        const scores = (typeof CONFIG !== 'undefined' && CONFIG.SEARCH_SCORES) ? CONFIG.SEARCH_SCORES : {
+            SUBSTRING_ORIGINAL: 800,
+            SUBSTRING_VISIBLE: 750,
+            INVERSE_MATCH: 700
+        };
+        
         if (examenNormalizadoOriginal.includes(busquedaNormalizada)) {
-            puntaje += 800;
+            return scores.SUBSTRING_ORIGINAL || 800;
         } else if (examenNormalizadoVisible.includes(busquedaNormalizada)) {
-            puntaje += 750; // Ligeramente menos que en el original
+            return scores.SUBSTRING_VISIBLE || 750;
         } else if (busquedaNormalizada.includes(examenNormalizadoOriginal) || busquedaNormalizada.includes(examenNormalizadoVisible)) {
-            puntaje += 700;
+            return scores.INVERSE_MATCH || 700;
         }
+        return 0;
+    }
 
-        // 3. Coincidencia por componentes - en ambos campos
+    // Calcular puntaje por componentes
+    static calcularPuntajeComponentes(componentesBusqueda, componentesExamenOriginal, componentesExamenVisible) {
+        const scores = (typeof CONFIG !== 'undefined' && CONFIG.SEARCH_SCORES) ? CONFIG.SEARCH_SCORES : {
+            COMPONENT_MATCH: 100,
+            ALL_COMPONENTS_BONUS: 200
+        };
+        
         const componentesCoincidentesOriginal = componentesBusqueda.filter(compBusqueda =>
             componentesExamenOriginal.some(compExamen => 
                 compExamen.includes(compBusqueda) || compBusqueda.includes(compExamen) ||
@@ -86,44 +96,91 @@ class SearchEngine {
         const componentesCoincidentes = Math.max(componentesCoincidentesOriginal, componentesCoincidentesVisible);
 
         if (componentesCoincidentes > 0) {
-            puntaje += componentesCoincidentes * 100;
+            let puntaje = componentesCoincidentes * (scores.COMPONENT_MATCH || 100);
             
-            // Bonus si coinciden todos los componentes principales
+            // Bonus si coinciden todos los componentes
             if (componentesCoincidentes === componentesBusqueda.length) {
-                puntaje += 200;
+                puntaje += scores.ALL_COMPONENTS_BONUS || 200;
             }
+            
+            return puntaje;
         }
+        return 0;
+    }
 
-        // 4. Coincidencia por sinónimos expandidos - en ambos campos
+    // Calcular puntaje por sinónimos
+    static calcularPuntajeSinonimos(busqueda, examenNormalizadoOriginal, examenNormalizadoVisible) {
+        const scores = (typeof CONFIG !== 'undefined' && CONFIG.SEARCH_SCORES) ? CONFIG.SEARCH_SCORES : {
+            SYNONYM_MATCH: 150
+        };
+        
         const terminosExpandidos = SearchEngine.expandirTerminosBusqueda(busqueda);
         for (const terminoExpandido of terminosExpandidos) {
             if (examenNormalizadoOriginal.includes(terminoExpandido)) {
-                puntaje += 150;
-                break;
+                return scores.SYNONYM_MATCH || 150;
             } else if (examenNormalizadoVisible.includes(terminoExpandido)) {
-                puntaje += 140; // Ligeramente menos que en el original
-                break;
+                return (scores.SYNONYM_MATCH || 150) - 10; // Ligeramente menos
             }
         }
+        return 0;
+    }
 
-        // 5. Coincidencia fonética (Levenshtein) - en ambos campos
+    // Calcular puntaje por similitud fonética (fuzzy)
+    static calcularPuntajeFuzzy(busquedaNormalizada, examenNormalizadoOriginal, examenNormalizadoVisible) {
+        const scores = (typeof CONFIG !== 'undefined' && CONFIG.SEARCH_SCORES) ? CONFIG.SEARCH_SCORES : {
+            FUZZY_MATCH_ORIGINAL: 120,
+            FUZZY_MATCH_VISIBLE: 110
+        };
+        
         if (SearchEngine.esCoincidenciaFuzzy(busquedaNormalizada, examenNormalizadoOriginal, 0.7)) {
-            puntaje += 120;
+            return scores.FUZZY_MATCH_ORIGINAL || 120;
         } else if (SearchEngine.esCoincidenciaFuzzy(busquedaNormalizada, examenNormalizadoVisible, 0.7)) {
-            puntaje += 110; // Ligeramente menos que en el original
+            return scores.FUZZY_MATCH_VISIBLE || 110;
         }
+        return 0;
+    }
+
+    // Calcular puntaje de búsqueda (refactorizado)
+    static calcularPuntajeBusqueda(busqueda, examen) {
+        const busquedaNormalizada = Utils.normalizarTexto(busqueda);
+        
+        // Extraer descripciones
+        const descripcionOriginal = examen.descripcion || '';
+        const descripcionVisible = examen.descripcion_visible || '';
+        const examenNormalizadoOriginal = Utils.normalizarTexto(descripcionOriginal);
+        const examenNormalizadoVisible = Utils.normalizarTexto(descripcionVisible);
+        
+        // Extraer componentes
+        const componentesBusqueda = Utils.extraerComponentes(busqueda);
+        const componentesExamenOriginal = Utils.extraerComponentes(descripcionOriginal);
+        const componentesExamenVisible = Utils.extraerComponentes(descripcionVisible);
+
+        // Calcular puntajes por tipo de coincidencia
+        let puntaje = 0;
+        puntaje += SearchEngine.calcularPuntajeExacto(busquedaNormalizada, examenNormalizadoOriginal, examenNormalizadoVisible);
+        puntaje += SearchEngine.calcularPuntajeSubstring(busquedaNormalizada, examenNormalizadoOriginal, examenNormalizadoVisible);
+        puntaje += SearchEngine.calcularPuntajeComponentes(componentesBusqueda, componentesExamenOriginal, componentesExamenVisible);
+        puntaje += SearchEngine.calcularPuntajeSinonimos(busqueda, examenNormalizadoOriginal, examenNormalizadoVisible);
+        puntaje += SearchEngine.calcularPuntajeFuzzy(busquedaNormalizada, examenNormalizadoOriginal, examenNormalizadoVisible);
 
         return puntaje;
     }
 
     // Búsqueda principal
     static buscarExamenes(terminoBusqueda, examenes) {
-        if (!terminoBusqueda || terminoBusqueda.trim().length < 2) {
+        const minLength = (typeof CONFIG !== 'undefined' && CONFIG.SEARCH_MIN_LENGTH) ? CONFIG.SEARCH_MIN_LENGTH : 2;
+        if (!terminoBusqueda || terminoBusqueda.trim().length < minLength) {
             return examenes; // Devolver todos si la búsqueda es muy corta
         }
 
         const area = UIManager.estado.areaActual || 'laboratorio';
-        console.log('🔍 ÁREA DETECTADA:', area, 'UIManager.estado:', UIManager.estado);
+        
+        // Usar Logger si está disponible, sino usar console.log
+        if (typeof Logger !== 'undefined') {
+            Logger.search('ÁREA DETECTADA:', { area, estado: UIManager.estado });
+        } else {
+            console.log('🔍 ÁREA DETECTADA:', area, 'UIManager.estado:', UIManager.estado);
+        }
         
         // Búsqueda especializada para odontología
         if (area === 'odontologia') {
@@ -135,30 +192,43 @@ class SearchEngine {
             puntaje: SearchEngine.calcularPuntajeBusqueda(terminoBusqueda, examen)
         }));
 
-        // Filtrar resultados con puntaje significativo y ordenar
-        // Umbral más alto para Ecografía (nombres más largos y específicos)
-        // Umbral de 750 para mostrar solo coincidencias directas (substring match = 800pts)
-        const umbral = area === 'ecografia' ? 750 : 50;
+        // Obtener umbral desde configuración (con fallback si CONFIG no está disponible)
+        const umbral = (typeof CONFIG !== 'undefined' && CONFIG.SEARCH_THRESHOLDS) 
+            ? (CONFIG.SEARCH_THRESHOLDS[area] || CONFIG.SEARCH_THRESHOLDS.laboratorio)
+            : (area === 'ecografia' ? 750 : 50);
         
-        console.log('🎯 Filtrado por área:', {
-            area: area,
-            umbral: umbral,
-            resultadosAntesFiltro: resultadosConPuntaje.length
-        });
+        if (typeof Logger !== 'undefined') {
+            Logger.search('Filtrado por área:', {
+                area,
+                umbral,
+                resultadosAntesFiltro: resultadosConPuntaje.length
+            });
+        } else {
+            console.log('🎯 Filtrado por área:', { area, umbral, resultadosAntesFiltro: resultadosConPuntaje.length });
+        }
 
         const resultadosFiltrados = resultadosConPuntaje
             .filter(resultado => resultado.puntaje > umbral)
             .sort((a, b) => b.puntaje - a.puntaje)
             .map(resultado => resultado.examen);
 
-        console.log('🎯 Resultados después de filtro:', {
-            umbral: umbral,
-            resultadosFiltrados: resultadosFiltrados.length
-        });
+        if (typeof Logger !== 'undefined') {
+            Logger.search('Resultados después de filtro:', {
+                umbral,
+                resultadosFiltrados: resultadosFiltrados.length
+            });
+        } else {
+            console.log('🎯 Resultados después de filtro:', { umbral, resultadosFiltrados: resultadosFiltrados.length });
+        }
 
         // Log detallado de puntajes para debugging
-        if (area === 'ecografia' && terminoBusqueda) {
-            console.log('📊 PUNTAJES DETALLADOS (Ecografía):');
+        const logSearchDetails = (typeof CONFIG !== 'undefined' && CONFIG.LOG_SEARCH_DETAILS) ? CONFIG.LOG_SEARCH_DETAILS : true;
+        if (logSearchDetails && area === 'ecografia' && terminoBusqueda) {
+            if (typeof Logger !== 'undefined') {
+                Logger.data('PUNTAJES DETALLADOS (Ecografía):');
+            } else {
+                console.log('📊 PUNTAJES DETALLADOS (Ecografía):');
+            }
             resultadosConPuntaje
                 .sort((a, b) => b.puntaje - a.puntaje)
                 .slice(0, 10) // Mostrar top 10
@@ -216,19 +286,34 @@ class SearchEngine {
     }
 
     // Búsqueda con debouncing
-    static crearBuscadorDebounced(callback, wait = 300) {
+    static crearBuscadorDebounced(callback, wait) {
+        // Usar wait por defecto si no se proporciona
+        if (wait === undefined) {
+            wait = (typeof CONFIG !== 'undefined' && CONFIG.SEARCH_DEBOUNCE_MS) ? CONFIG.SEARCH_DEBOUNCE_MS : 300;
+        }
         return Utils.debounce((termino, datos) => {
-            console.log('🔍 Buscador debounced ejecutado:', {
-                termino: termino,
-                datosRecibidos: datos.length,
-                datosAreaActual: window.datosAreaActual?.length || 0
-            });
+            if (typeof Logger !== 'undefined') {
+                Logger.search('Buscador debounced ejecutado:', {
+                    termino,
+                    datosRecibidos: datos.length,
+                    datosAreaActual: window.datosAreaActual?.length || 0
+                });
+            } else {
+                console.log('🔍 Buscador debounced ejecutado:', { termino, datosRecibidos: datos.length, datosAreaActual: window.datosAreaActual?.length || 0 });
+            }
+            
             const resultados = SearchEngine.buscarExamenes(termino, datos);
-            console.log('📊 Resultados de búsqueda:', {
-                termino: termino,
-                resultadosFiltrados: resultados.length,
-                datosOriginales: datos.length
-            });
+            
+            if (typeof Logger !== 'undefined') {
+                Logger.data('Resultados de búsqueda:', {
+                    termino,
+                    resultadosFiltrados: resultados.length,
+                    datosOriginales: datos.length
+                });
+            } else {
+                console.log('📊 Resultados de búsqueda:', { termino, resultadosFiltrados: resultados.length, datosOriginales: datos.length });
+            }
+            
             callback(resultados, termino);
         }, wait);
     }
