@@ -239,8 +239,17 @@ class AppController {
 
     // Renderizar resultados de búsqueda
     static renderizarResultadosBusqueda(examenes, contenedor) {
+        const area = UIManager.estado.areaActual;
+        
         examenes.forEach(examen => {
-            const listItem = AppController.crearItemExamen(examen);
+            let listItem;
+            if (area === 'odontologia') {
+                // Para odontología, usar el renderizado específico de servicios
+                listItem = AppController.crearItemServicioOdontologia(examen);
+            } else {
+                // Para laboratorio e imagenología, usar el renderizado de exámenes
+                listItem = AppController.crearItemExamen(examen);
+            }
             contenedor.appendChild(listItem);
         });
     }
@@ -263,8 +272,12 @@ class AppController {
             AppController.renderizarCategoriasOdontologia(categorias, contenedor);
         } else {
             // Para imagenología, mostrar sin categorías
+            // IMPORTANTE: Usar solo los exámenes recibidos, no todos los datos
             console.log('📋 Renderizando imagenología sin categorías:', examenes.length, 'exámenes');
-            AppController.renderizarResultadosBusqueda(examenes, contenedor);
+            examenes.forEach(examen => {
+                const listItem = AppController.crearItemExamen(examen);
+                contenedor.appendChild(listItem);
+            });
         }
     }
 

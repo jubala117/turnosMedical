@@ -122,6 +122,14 @@ class SearchEngine {
             return examenes; // Devolver todos si la búsqueda es muy corta
         }
 
+        const area = UIManager.estado.areaActual || 'laboratorio';
+        console.log('🔍 ÁREA DETECTADA:', area, 'UIManager.estado:', UIManager.estado);
+        
+        // Búsqueda especializada para odontología
+        if (area === 'odontologia') {
+            return SearchEngine.buscarServiciosOdontologia(terminoBusqueda, examenes);
+        }
+
         const resultadosConPuntaje = examenes.map(examen => ({
             examen,
             puntaje: SearchEngine.calcularPuntajeBusqueda(terminoBusqueda, examen)
@@ -129,8 +137,8 @@ class SearchEngine {
 
         // Filtrar resultados con puntaje significativo y ordenar
         // Umbral más alto para Ecografía (nombres más largos y específicos)
-        const area = UIManager.estado.areaActual || 'laboratorio';
-        const umbral = area === 'ecografia' ? 150 : 50;
+        // Umbral de 750 para mostrar solo coincidencias directas (substring match = 800pts)
+        const umbral = area === 'ecografia' ? 750 : 50;
         
         console.log('🎯 Filtrado por área:', {
             area: area,
@@ -148,7 +156,63 @@ class SearchEngine {
             resultadosFiltrados: resultadosFiltrados.length
         });
 
+        // Log detallado de puntajes para debugging
+        if (area === 'ecografia' && terminoBusqueda) {
+            console.log('📊 PUNTAJES DETALLADOS (Ecografía):');
+            resultadosConPuntaje
+                .sort((a, b) => b.puntaje - a.puntaje)
+                .slice(0, 10) // Mostrar top 10
+                .forEach((resultado, index) => {
+                    console.log(`${index + 1}. [${resultado.puntaje}pts] ${resultado.examen.descripcion}`);
+                });
+            console.log(`Total exámenes evaluados: ${resultadosConPuntaje.length}`);
+            console.log(`Exámenes que pasan el umbral (>${umbral}): ${resultadosFiltrados.length}`);
+        }
+
         return resultadosFiltrados;
+    }
+
+    // Búsqueda especializada para servicios odontológicos
+    static buscarServiciosOdontologia(terminoBusqueda, servicios) {
+        const terminoNormalizado = Utils.normalizarTexto(terminoBusqueda);
+        const resultados = [];
+
+        servicios.forEach(servicio => {
+            let puntajeServicio = 0;
+            
+            // Buscar en el nombre del servicio principal
+            const nombreServicio = Utils.normalizarTexto(servicio.servicio);
+            if (nombreServicio.includes(terminoNormalizado)) {
+                puntajeServicio += 1000;
+            } else if (SearchEngine.esCoincidenciaFuzzy(terminoNormalizado, nombreServicio, 0.7)) {
+                puntajeServicio += 800;
+            }
+
+            // Buscar en las opciones del servicio
+            if (servicio.encontrado && servicio.opciones) {
+                servicio.opciones.forEach(opcion => {
+                    const descripcionOpcion = Utils.normalizarTexto(opcion.descripcion_bd);
+                    if (descripcionOpcion.includes(terminoNormalizado)) {
+                        puntajeServicio += 900;
+                    } else if (SearchEngine.esCoincidenciaFuzzy(terminoNormalizado, descripcionOpcion, 0.7)) {
+                        puntajeServicio += 700;
+                    }
+                });
+            }
+
+            // Si hay puntaje significativo, incluir el servicio
+            if (puntajeServicio > 0) {
+                resultados.push({
+                    servicio: servicio,
+                    puntaje: puntajeServicio
+                });
+            }
+        });
+
+        // Ordenar por puntaje y devolver solo los servicios
+        return resultados
+            .sort((a, b) => b.puntaje - a.puntaje)
+            .map(resultado => resultado.servicio);
     }
 
     // Búsqueda con debouncing
