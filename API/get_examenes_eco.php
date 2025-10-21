@@ -3,17 +3,7 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
 require_once(__DIR__ . '/../db_connect.inc.php');
-
-// Función para calcular precio Club Medical según las nuevas reglas
-function calcularPrecioClub($precioParticular) {
-    if ($precioParticular < 120) {
-        // Descuento fijo de $5 para precios < 120
-        return $precioParticular - 5;
-    } else {
-        // Descuento fijo de $10 para precios >= 120
-        return $precioParticular - 10;
-    }
-}
+require_once(__DIR__ . '/utils.php');
 
 try {
     // Mapeo de nombres de exámenes a IDs de tipoexamenlab
@@ -46,27 +36,42 @@ try {
         'ECO DOPPLER TESTICULAR' => [4133]
     ];
 
-    $examenes_resultado = [];
+    // OPTIMIZACIÓN: Recolectar todos los IDs primero para hacer una sola query
+    $todosLosIDs = [];
+    foreach ($mapeo_examenes as $ids) {
+        $todosLosIDs = array_merge($todosLosIDs, $ids);
+    }
+    $todosLosIDs = array_unique($todosLosIDs);
 
+    // Ejecutar UNA SOLA query para todos los exámenes (en vez de 26 queries)
+    $placeholders = str_repeat('?,', count($todosLosIDs) - 1) . '?';
+    $sql = "SELECT idTipoExamenLab, descTipoExamen, precioUnitario
+            FROM tipoexamenlab
+            WHERE idTipoExamenLab IN ($placeholders)";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->execute(array_values($todosLosIDs));
+    $resultadosDB = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Indexar resultados por ID para búsqueda O(1)
+    $preciosPorID = [];
+    foreach ($resultadosDB as $row) {
+        $preciosPorID[$row['idTipoExamenLab']] = $row;
+    }
+
+    // Ahora construir el resultado final sin hacer queries adicionales
+    $examenes_resultado = [];
     foreach ($mapeo_examenes as $nombre_examen => $ids) {
-        // Construir la consulta para buscar en tipoexamenlab
-        $placeholders = str_repeat('?,', count($ids) - 1) . '?';
-        $sql = "SELECT idTipoExamenLab, descTipoExamen, precioUnitario
-                FROM tipoexamenlab 
-                WHERE idTipoExamenLab IN ($placeholders)";
-        
-        $stmt = $conn->prepare($sql);
-        $stmt->execute($ids);
-        $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        if ($resultados && count($resultados) > 0) {
-            // Usar el primer resultado encontrado
-            $resultado = $resultados[0];
+        // Buscar el precio en el índice (sin query, solo lookup)
+        $idExamen = $ids[0]; // Usar el primer ID del mapeo
+
+        if (isset($preciosPorID[$idExamen])) {
+            $resultado = $preciosPorID[$idExamen];
             $precio_particular = floatval($resultado['precioUnitario']);
-            
+
             // Calcular precio Club Medical automáticamente
             $precio_club = calcularPrecioClub($precio_particular);
-            
+
             $examenes_resultado[] = [
                 'descripcion' => $nombre_examen,
                 'precio_particular' => $precio_particular,
@@ -85,10 +90,9 @@ try {
         }
     }
 
-    echo json_encode($examenes_resultado);
+    sendSuccess($examenes_resultado);
 
 } catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(["error" => "Error en la consulta: " . $e->getMessage()]);
+    handleError($e, 'get_examenes_eco');
 }
 ?>
