@@ -4,8 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agendamiento de Citas - Medical&Care</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="description" content="Agenda tu cita médica fácilmente en Medical&Care. Sistema de turnos en línea para especialidades médicas, exámenes de laboratorio, imagenología y odontología.">
+
+    <!-- Preconexión a dominios externos para mejorar rendimiento -->
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- TailwindCSS compilado y optimizado (14KB vs 3MB del CDN) -->
+    <link rel="stylesheet" href="css/output.css">
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous">
+
+    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         /* Estilos base para que se parezca a tu web */
@@ -76,29 +88,84 @@
         .hidden {
             display: none !important;
         }
+
+        /* Estilos de focus para accesibilidad con teclado */
+        button:focus-visible,
+        input:focus-visible,
+        a:focus-visible {
+            outline: 3px solid #00529B;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 3px rgba(0, 82, 155, 0.2);
+        }
+
+        /* Clase sr-only para lectores de pantalla */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+
+        .sr-only.focus\:not-sr-only:focus {
+            position: static;
+            width: auto;
+            height: auto;
+            padding: inherit;
+            margin: inherit;
+            overflow: visible;
+            clip: auto;
+            white-space: normal;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center">
 
+    <!-- Skip navigation para accesibilidad -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:bg-blue-600 focus:text-white focus:px-4 focus:py-2 focus:rounded">
+        Saltar al contenido principal
+    </a>
+
     <!-- Pantalla de Cédula -->
-    <div id="screen-cedula" class="screen active flex-col items-center justify-center p-8">
-        <img src="images/logo.png" alt="Medical&Care Logo" style="width: 150px;">
-        <h1 class="text-4xl font-bold text-gray-800 mb-4">Agendamiento de Citas</h1>
+    <div id="screen-cedula" class="screen active flex-col items-center justify-center p-8" role="main" aria-labelledby="titulo-cedula">
+        <img src="images/logo.png" alt="Logotipo de Medical&Care" class="logo" width="150" height="auto" loading="eager">
+        <h1 id="titulo-cedula" class="text-4xl font-bold text-gray-800 mb-4">Agendamiento de Citas</h1>
         <p class="text-xl text-gray-600 mb-8">Ingresa tu número de cédula para comenzar</p>
-        <input type="text" id="cedula-input" class="text-3xl text-center w-full max-w-md p-4 border-2 border-gray-300 rounded-lg mb-8" placeholder="Ej: 1712345678">
-        <button class="btn-primary">Verificar</button>
-        <a href="https://medicalcare.ec/intranet/perfil/" class="text-blue-600 mt-8">¿Eres nuevo? Regístrate aquí</a>
+
+        <label for="cedula-input" class="sr-only">Número de cédula</label>
+        <input
+            type="text"
+            id="cedula-input"
+            name="cedula"
+            class="text-3xl text-center w-full max-w-md p-4 border-2 border-gray-300 rounded-lg mb-8"
+            placeholder="Ej: 1712345678"
+            aria-label="Número de cédula de identidad"
+            aria-required="true"
+            aria-describedby="cedula-help"
+            maxlength="10"
+            inputmode="numeric"
+            pattern="[0-9]{10}">
+        <span id="cedula-help" class="sr-only">Ingrese su número de cédula de 10 dígitos</span>
+
+        <button type="button" class="btn-primary" aria-label="Verificar número de cédula">Verificar</button>
+        <a href="https://medicalcare.ec/intranet/perfil/" class="text-blue-600 mt-8" rel="noopener noreferrer">¿Eres nuevo? Regístrate aquí</a>
     </div>
 
     <!-- Pantalla de Especialidades -->
-    <div id="screen-especialidad" class="screen flex-col items-center justify-center p-8">
-        <h1 class="text-4xl font-bold text-gray-800 mb-2">Hola, <span id="patient-name"></span></h1>
+    <div id="screen-especialidad" class="screen flex-col items-center justify-center p-8" role="main" aria-labelledby="titulo-especialidad">
+        <h1 id="titulo-especialidad" class="text-4xl font-bold text-gray-800 mb-2">
+            Hola, <span id="patient-name" aria-live="polite"></span>
+        </h1>
         <p class="text-xl text-gray-600 mb-12">Elige la especialidad para tu cita</p>
-        <div id="specialties-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div id="specialties-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12" role="list" aria-label="Lista de especialidades médicas" aria-live="polite">
             <!-- Las especialidades se cargarán aquí dinámicamente -->
         </div>
         <div class="flex space-x-4">
-            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
+            <button type="button" class="btn-secondary" onclick="showScreen('screen-cedula')" aria-label="Cancelar agendamiento">Cancelar</button>
         </div>
     </div>
 
@@ -147,17 +214,28 @@
         <p class="text-xl text-gray-600 mb-4" id="subtitulo-examenes">Elige el examen que necesitas.</p>
         
         <!-- Barra de búsqueda -->
-        <div class="w-full max-w-2xl mb-8">
+        <div class="w-full max-w-2xl mb-8" role="search">
             <div class="relative">
-                <input type="text" id="buscar-examen" 
-                       class="w-full p-4 pl-12 border-2 border-gray-300 rounded-lg text-lg focus:border-blue-500 focus:outline-none"
-                       placeholder="🔍 Buscar examen... Ej: glucosa, c p k, tiroides">
-                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <button id="limpiar-busqueda" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden">
-                    <i class="fas fa-times"></i>
+                <label for="buscar-examen" class="sr-only">Buscar examen médico</label>
+                <input
+                    type="search"
+                    id="buscar-examen"
+                    name="buscar-examen"
+                    class="w-full p-4 pl-12 border-2 border-gray-300 rounded-lg text-lg focus:border-blue-500 focus:outline-none"
+                    placeholder="Buscar examen... Ej: glucosa, c p k, tiroides"
+                    aria-label="Buscar examen médico por nombre"
+                    aria-describedby="contador-resultados"
+                    autocomplete="off">
+                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400" aria-hidden="true"></i>
+                <button
+                    type="button"
+                    id="limpiar-busqueda"
+                    class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 hidden"
+                    aria-label="Limpiar búsqueda">
+                    <i class="fas fa-times" aria-hidden="true"></i>
                 </button>
             </div>
-            <p id="contador-resultados" class="text-sm text-gray-500 mt-2 text-center"></p>
+            <p id="contador-resultados" class="text-sm text-gray-500 mt-2 text-center" role="status" aria-live="polite" aria-atomic="true"></p>
         </div>
 
         <div id="examenes-grid" class="w-full max-w-5xl space-y-3 mb-12">
@@ -175,17 +253,23 @@
     </div>
 
     <!-- Modal para Club Medical -->
-    <div id="modal-club-medical" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+    <div
+        id="modal-club-medical"
+        class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        aria-describedby="modal-description">
         <div class="bg-white rounded-lg p-8 max-w-md mx-4">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Club Medical</h2>
-            <p class="text-gray-600 mb-6">
+            <h2 id="modal-title" class="text-2xl font-bold text-gray-800 mb-4">Club Medical</h2>
+            <p id="modal-description" class="text-gray-600 mb-6">
                 No eres Club Medical, suscríbete por tan solo $10 al año para precios preferenciales y recibe tu primera consulta de Medicina General gratuita.
             </p>
             <div class="flex space-x-4">
-                <a href="https://www.medicalcare.ec/intranet" target="_blank" class="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                <a href="https://www.medicalcare.ec/intranet" target="_blank" rel="noopener noreferrer" class="flex-1 bg-blue-600 text-white text-center py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors">
                     Inscribirme
                 </a>
-                <button onclick="closeModal()" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">
+                <button type="button" onclick="closeModal()" class="flex-1 bg-gray-500 text-white py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors" aria-label="Cerrar modal">
                     Cerrar
                 </button>
             </div>
