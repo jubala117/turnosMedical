@@ -2,18 +2,13 @@
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 
-require_once('../db_connect.inc.php');
+require_once(__DIR__ . '/../db_connect.inc.php');
+require_once(__DIR__ . '/utils.php');
 
-$cedula = isset($_GET['cedula']) ? trim($_GET['cedula']) : null;
+$cedula = isset($_GET['cedula']) ? $_GET['cedula'] : null;
 
-// Log para debugging
-error_log("API verificar_paciente.php llamada con cédula: " . ($cedula ?: 'NULL'));
-
-if (empty($cedula)) {
-    http_response_code(400);
-    echo json_encode(["existe" => false, "error" => "No se proporcionó un número de cédula."]);
-    exit();
-}
+// Validar cédula usando utilidad compartida
+$cedula = requireParam($cedula, 'cedula', 'string');
 
 try {
     // Consulta mejorada - detectar ISSFA y Club Medical
@@ -42,12 +37,13 @@ try {
     $paciente = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($paciente) {
-        error_log("Paciente encontrado: " . $paciente['nombreCompleto'] . 
-                 " (ID: " . $paciente['idPersona'] . 
-                 ", ISSFA: " . $paciente['esISSFA'] . 
-                 ", Club Medical: " . $paciente['esClubMedical'] . ")");
-        
-        echo json_encode([
+        // Log solo en modo debug (opcional)
+        if (getenv('DEBUG_MODE') === 'true') {
+            error_log("Paciente encontrado: " . $paciente['nombreCompleto'] .
+                     " (ID: " . $paciente['idPersona'] . ")");
+        }
+
+        sendSuccess([
             "existe" => true,
             "idPersona" => (int)$paciente['idPersona'],
             "nombre" => $paciente['nombreCompleto'],
@@ -55,13 +51,10 @@ try {
             "clubMedical" => (bool)$paciente['esClubMedical']
         ]);
     } else {
-        error_log("Paciente NO encontrado para cédula: " . $cedula);
-        echo json_encode(["existe" => false, "error" => "Paciente no encontrado."]);
+        sendSuccess(["existe" => false, "error" => "Paciente no encontrado."]);
     }
 
 } catch (PDOException $e) {
-    http_response_code(500);
-    error_log("Error en verificar_paciente.php: " . $e->getMessage());
-    echo json_encode(["existe" => false, "error" => "Error en la base de datos."]);
+    handleError($e, 'verificar_paciente');
 }
 ?>
