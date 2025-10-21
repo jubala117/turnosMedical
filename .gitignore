@@ -1,2 +1,10 @@
 .aider*
 .env
+
+# Node modules
+node_modules/
+package-lock.json
+
+# TailwindCSS output (se regenera con npm run build:css)
+# Comentar la siguiente línea si prefieres incluir el CSS compilado en Git
+# css/output.css
