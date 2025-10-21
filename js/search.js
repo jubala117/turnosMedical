@@ -393,6 +393,91 @@ class SearchEngine {
         return categorias;
     }
 
+    // Clasificar procedimientos de Rayos X por categorías
+    static clasificarProcedimientosRayosX(procedimientos) {
+        const categorias = {
+            'CRÁNEO': [],
+            'EXTREMIDADES SUPERIORES': [],
+            'EXTREMIDADES INFERIORES': [],
+            'TÓRAX': [],
+            'ABDOMEN': [],
+            'PELVIS': [],
+            'COLUMNA VERTEBRAL': [],
+            'ESTUDIOS CONTRASTADOS': []
+        };
+
+        procedimientos.forEach(procedimiento => {
+            const descripcion = procedimiento.descripcion.toUpperCase();
+            
+            if (descripcion.includes('CRANEO') || descripcion.includes('WATERS') || descripcion.includes('SENOS') || 
+                descripcion.includes('ORBITAS') || descripcion.includes('TEMPOROMANDIBULAR') || descripcion.includes('MAXILAR') ||
+                descripcion.includes('NARIZ') || descripcion.includes('CAVUN')) {
+                categorias['CRÁNEO'].push(procedimiento);
+            } else if (descripcion.includes('HOMBRO') || descripcion.includes('BRAZO') || descripcion.includes('HUMERO') ||
+                       descripcion.includes('CODO') || descripcion.includes('ANTEBRAZO') || descripcion.includes('MUÑECA') ||
+                       descripcion.includes('MANO') || descripcion.includes('DEDOS')) {
+                categorias['EXTREMIDADES SUPERIORES'].push(procedimiento);
+            } else if (descripcion.includes('FEMUR') || descripcion.includes('MUSLO') || descripcion.includes('RODILLA') ||
+                       descripcion.includes('PIERNA') || descripcion.includes('TOBILLO') || descripcion.includes('PIE') ||
+                       descripcion.includes('CALCANEOS')) {
+                categorias['EXTREMIDADES INFERIORES'].push(procedimiento);
+            } else if (descripcion.includes('TORAX') || descripcion.includes('TELERADIOGRAFIA')) {
+                categorias['TÓRAX'].push(procedimiento);
+            } else if (descripcion.includes('ABDOMEN')) {
+                categorias['ABDOMEN'].push(procedimiento);
+            } else if (descripcion.includes('PELVIS') || descripcion.includes('CADERA')) {
+                categorias['PELVIS'].push(procedimiento);
+            } else if (descripcion.includes('CERVICAL') || descripcion.includes('DORSAL') || descripcion.includes('LUMBAR') ||
+                       descripcion.includes('COLUMNA') || descripcion.includes('SACRO') || descripcion.includes('COXIS')) {
+                categorias['COLUMNA VERTEBRAL'].push(procedimiento);
+            } else if (descripcion.includes('COLON') || descripcion.includes('TRANSITO') || descripcion.includes('ESOFAGOGRAMA')) {
+                categorias['ESTUDIOS CONTRASTADOS'].push(procedimiento);
+            } else {
+                // Si no coincide con ninguna categoría, poner en la primera disponible
+                categorias['CRÁNEO'].push(procedimiento);
+            }
+        });
+
+        return categorias;
+    }
+
+    // Clasificar exámenes de ecografía por categorías
+    static clasificarExamenesEcografia(examenes) {
+        const categorias = {
+            'ECOGRAFÍAS ABDOMINALES': [],
+            'ECOGRAFÍAS PÉLVICAS': [],
+            'ECOGRAFÍAS OBSTÉTRICAS': [],
+            'ECOGRAFÍAS DE PARTES BLANDAS': [],
+            'ECOGRAFÍAS VASCULARES': [],
+            'ECOGRAFÍAS PEDIÁTRICAS': []
+        };
+
+        examenes.forEach(examen => {
+            const descripcion = examen.descripcion.toUpperCase();
+            
+            if (descripcion.includes('ABDOMEN') || descripcion.includes('HIGADO') || descripcion.includes('RENAL') || 
+                descripcion.includes('PROSTATICO') || descripcion.includes('VESICAL')) {
+                categorias['ECOGRAFÍAS ABDOMINALES'].push(examen);
+            } else if (descripcion.includes('PELVICO') || descripcion.includes('TRANSVAGINAL') || descripcion.includes('MAMARIO')) {
+                categorias['ECOGRAFÍAS PÉLVICAS'].push(examen);
+            } else if (descripcion.includes('OBSTETRICO') || descripcion.includes('FETAL') || descripcion.includes('PERFIL BIOFISICO')) {
+                categorias['ECOGRAFÍAS OBSTÉTRICAS'].push(examen);
+            } else if (descripcion.includes('TIROIDES') || descripcion.includes('CUELLO') || descripcion.includes('PARED ABDOMINAL') ||
+                       descripcion.includes('TESTICULAR') || descripcion.includes('MUSCULO ESQUELETICO')) {
+                categorias['ECOGRAFÍAS DE PARTES BLANDAS'].push(examen);
+            } else if (descripcion.includes('DOPPLER')) {
+                categorias['ECOGRAFÍAS VASCULARES'].push(examen);
+            } else if (descripcion.includes('TRANSFONTANELAR') || descripcion.includes('CADERA PEDIATRICA')) {
+                categorias['ECOGRAFÍAS PEDIÁTRICAS'].push(examen);
+            } else {
+                // Si no coincide con ninguna categoría, poner en abdominales por defecto
+                categorias['ECOGRAFÍAS ABDOMINALES'].push(examen);
+            }
+        });
+
+        return categorias;
+    }
+
     // Inicializar eventos de búsqueda
     static inicializarBusqueda(callbackRenderizado) {
         const buscarInput = document.getElementById('buscar-examen');
@@ -410,9 +495,36 @@ class SearchEngine {
             
             if (datosAreaActual && datosAreaActual.length > 0) {
                 if (termino.length >= 2) {
+                    // Ejecutar búsqueda con 2+ caracteres (para VIH, TSH, T3, T4, LH, etc.)
                     buscadorDebounced(termino, datosAreaActual);
                 } else if (termino.length === 0) {
+                    // Campo vacío: restaurar vista completa con categorías
+                    console.log('🔄 Campo vacío detectado, restaurando vista completa');
                     callbackRenderizado(datosAreaActual, '');
+                } else if (termino.length === 1) {
+                    // Solo 1 carácter: restaurar vista completa inmediatamente
+                    console.log('🔄 Solo 1 carácter detectado, restaurando vista completa');
+                    callbackRenderizado(datosAreaActual, '');
+                }
+            }
+        });
+
+        // Evento adicional para detectar borrado rápido
+        buscarInput.addEventListener('keydown', function(event) {
+            if (event.key === 'Backspace' || event.key === 'Delete') {
+                const termino = this.value.trim();
+                // Si queda 1 carácter y se presiona borrar, restaurar vista completa inmediatamente
+                if (termino.length === 1) {
+                    setTimeout(() => {
+                        const nuevoTermino = this.value.trim();
+                        if (nuevoTermino.length === 0) {
+                            const datosAreaActual = window.datosAreaActual || [];
+                            if (datosAreaActual && datosAreaActual.length > 0) {
+                                console.log('🔄 Borrado completo detectado, restaurando vista completa');
+                                callbackRenderizado(datosAreaActual, '');
+                            }
+                        }
+                    }, 10);
                 }
             }
         });

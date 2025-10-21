@@ -73,8 +73,8 @@ class UIManager {
         const normalizedName = Utils.generarNombreImagen(especialidad.descEspecialidad);
         const imageName = normalizedName;
 
-        // Lógica especial para categorías IMAGEN, LABORATORIO y ODONTOLOGÍA
-        if (normalizedName === 'imagen' || normalizedName === 'laboratorio' || normalizedName === 'odontologia') {
+        // Lógica especial para categorías IMAGEN, LABORATORIO, ODONTOLOGÍA y RAYOS X
+        if (normalizedName === 'imagen' || normalizedName === 'laboratorio' || normalizedName === 'odontologia' || normalizedName === 'rayos_x') {
             card.innerHTML = UIManager.crearHTMLCategoriaEspecial(especialidad, normalizedName, imageName);
             card.addEventListener('click', () => UIManager.manejarCategoriaEspecial(normalizedName));
         } else {
@@ -96,7 +96,11 @@ class UIManager {
 
     // Crear HTML para categorías especiales
     static crearHTMLCategoriaEspecial(especialidad, normalizedName, imageName) {
-        const icono = normalizedName === 'imagen' ? 'fa-x-ray' : 'fa-flask';
+        let icono = 'fa-flask'; // Por defecto para laboratorio
+        if (normalizedName === 'imagen') icono = 'fa-x-ray';
+        if (normalizedName === 'rayos_x') icono = 'fa-x-ray';
+        if (normalizedName === 'odontologia') icono = 'fa-tooth';
+        
         return `
             <div class="flex-1 relative overflow-hidden rounded-t-xl">
                 <img src="images/${imageName}.png" alt="${especialidad.descEspecialidad}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
@@ -198,6 +202,8 @@ class UIManager {
             await AppController.cargarExamenesLaboratorio();
         } else if (normalizedName === 'odontologia') {
             await AppController.cargarServiciosOdontologia();
+        } else if (normalizedName === 'rayos_x') {
+            await AppController.cargarRayosX();
         }
         Utils.mostrarPantalla('screen-examenes');
     }

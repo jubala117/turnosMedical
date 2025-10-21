@@ -138,6 +138,9 @@ class Utils {
         const activeScreen = document.getElementById(screenId);
         if (activeScreen) {
             activeScreen.classList.add('active');
+            
+            // 🔥 NUEVO: Scroll automático al top cuando se cambia de pantalla
+            window.scrollTo(0, 0);
         }
     }
 

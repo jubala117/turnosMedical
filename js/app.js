@@ -174,6 +174,16 @@ class AppController {
         }
     }
 
+    // Cargar procedimientos de rayos X
+    static async cargarRayosX() {
+        try {
+            const procedimientos = await ApiService.obtenerRayosX();
+            AppController.configurarPantallaExamenes('Procedimientos de Rayos X', 'Elige el procedimiento que necesitas.', procedimientos, 'rayosx');
+        } catch (error) {
+            Utils.mostrarError(error.message);
+        }
+    }
+
     // Configurar pantalla de exámenes
     static configurarPantallaExamenes(titulo, subtitulo, datos, area) {
         // Limpiar búsqueda antes de configurar nueva área
@@ -276,10 +286,16 @@ class AppController {
         } else if (area === 'odontologia') {
             const categorias = SearchEngine.clasificarServiciosOdontologia(examenes);
             AppController.renderizarCategoriasOdontologia(categorias, contenedor);
+        } else if (area === 'rayosx') {
+            const categorias = SearchEngine.clasificarProcedimientosRayosX(examenes);
+            AppController.renderizarCategoriasRayosX(categorias, contenedor);
+        } else if (area === 'ecografia') {
+            const categorias = SearchEngine.clasificarExamenesEcografia(examenes);
+            AppController.renderizarCategoriasEcografia(categorias, contenedor);
         } else {
-            // Para imagenología, mostrar sin categorías
+            // Para otras áreas, mostrar sin categorías
             // IMPORTANTE: Usar solo los exámenes recibidos, no todos los datos
-            console.log('📋 Renderizando imagenología sin categorías:', examenes.length, 'exámenes');
+            console.log('📋 Renderizando sin categorías:', examenes.length, 'exámenes');
             examenes.forEach(examen => {
                 const listItem = AppController.crearItemExamen(examen);
                 contenedor.appendChild(listItem);
@@ -291,8 +307,8 @@ class AppController {
     static renderizarCategoriasLaboratorio(categorias, contenedor) {
         Object.entries(categorias).forEach(([categoria, examenesCategoria]) => {
             if (examenesCategoria.length > 0) {
-                // Añadir título de categoría
-                const tituloCategoria = Utils.crearElemento('h2', 'text-2xl font-bold text-gray-700 mt-6 mb-2 pt-4 border-t', categoria);
+                // Añadir título de categoría con estilo azul unificado
+                const tituloCategoria = Utils.crearElemento('h2', 'text-2xl font-bold text-blue-800 mt-8 mb-4 pt-6 border-t-2 border-blue-200', categoria);
                 contenedor.appendChild(tituloCategoria);
 
                 // Añadir exámenes de la categoría
@@ -308,14 +324,48 @@ class AppController {
     static renderizarCategoriasOdontologia(categorias, contenedor) {
         Object.entries(categorias).forEach(([categoria, serviciosCategoria]) => {
             if (serviciosCategoria.length > 0) {
-                // Añadir título de categoría
-                const tituloCategoria = Utils.crearElemento('h2', 'text-2xl font-bold text-gray-700 mt-6 mb-2 pt-4 border-t', categoria);
+                // Añadir título de categoría con estilo azul unificado
+                const tituloCategoria = Utils.crearElemento('h2', 'text-2xl font-bold text-blue-800 mt-8 mb-4 pt-6 border-t-2 border-blue-200', categoria);
                 contenedor.appendChild(tituloCategoria);
 
                 // Añadir servicios de la categoría
                 serviciosCategoria.forEach(servicio => {
                     const serviceContainer = AppController.crearItemServicioOdontologia(servicio);
                     contenedor.appendChild(serviceContainer);
+                });
+            }
+        });
+    }
+
+    // Renderizar categorías de Rayos X
+    static renderizarCategoriasRayosX(categorias, contenedor) {
+        Object.entries(categorias).forEach(([categoria, procedimientosCategoria]) => {
+            if (procedimientosCategoria.length > 0) {
+                // Añadir título de categoría con estilo azul unificado
+                const tituloCategoria = Utils.crearElemento('h2', 'text-2xl font-bold text-blue-800 mt-8 mb-4 pt-6 border-t-2 border-blue-200', categoria);
+                contenedor.appendChild(tituloCategoria);
+
+                // Añadir procedimientos de la categoría
+                procedimientosCategoria.forEach(procedimiento => {
+                    const listItem = AppController.crearItemExamen(procedimiento);
+                    contenedor.appendChild(listItem);
+                });
+            }
+        });
+    }
+
+    // Renderizar categorías de ecografía
+    static renderizarCategoriasEcografia(categorias, contenedor) {
+        Object.entries(categorias).forEach(([categoria, examenesCategoria]) => {
+            if (examenesCategoria.length > 0) {
+                // Añadir título de categoría con estilo azul unificado
+                const tituloCategoria = Utils.crearElemento('h2', 'text-2xl font-bold text-blue-800 mt-8 mb-4 pt-6 border-t-2 border-blue-200', categoria);
+                contenedor.appendChild(tituloCategoria);
+
+                // Añadir exámenes de la categoría
+                examenesCategoria.forEach(examen => {
+                    const listItem = AppController.crearItemExamen(examen);
+                    contenedor.appendChild(listItem);
                 });
             }
         });

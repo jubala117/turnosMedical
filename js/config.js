@@ -12,6 +12,7 @@ const CONFIG = {
     SEARCH_THRESHOLDS: {
         laboratorio: 50,
         ecografia: 750,
+        rayosx: 750,  // Same threshold as ecografia for precise filtering
         odontologia: 0  // Uses specialized search
     },
     

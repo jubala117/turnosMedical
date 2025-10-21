@@ -71,7 +71,7 @@ class ApiService {
         }
     }
 
-    // Obtener exámenes de imagenología
+    // Obtener exámenes de imagenología (ecografía)
     static async obtenerExamenesImagen() {
         try {
             const response = await fetch(`${CONFIG.API_BASE_URL}/get_examenes_eco.php`);
@@ -79,6 +79,17 @@ class ApiService {
         } catch (error) {
             console.error('Error al obtener exámenes de imagen:', error);
             throw new Error('Error al cargar los exámenes de imagen');
+        }
+    }
+
+    // Obtener procedimientos de rayos X
+    static async obtenerRayosX() {
+        try {
+            const response = await fetch(`${CONFIG.API_BASE_URL}/get_rayos_x.php`);
+            return await response.json();
+        } catch (error) {
+            console.error('Error al obtener procedimientos de rayos X:', error);
+            throw new Error('Error al cargar los procedimientos de rayos X');
         }
     }
 
