@@ -284,57 +284,153 @@
             font-size: 0.875rem;
         }
 
+        /* 🔥 TOUCH OPTIMIZED: Inputs and interactive elements */
+        input[type="text"],
+        input[type="search"],
+        input[type="number"] {
+            font-size: 1.5rem !important;
+            min-height: 70px !important;
+            padding: 1.25rem !important;
+            touch-action: manipulation;
+        }
+
+        /* Touch-friendly spacing */
+        .touch-spacing-y > * + * {
+            margin-top: 1.5rem !important;
+        }
+
+        .touch-spacing-x > * + * {
+            margin-left: 1.5rem !important;
+        }
+
+        /* Larger touch targets for price buttons in specialty cards */
+        .precio-btn,
+        .ver-opciones-btn {
+            min-height: 60px !important;
+            font-size: 1.125rem !important;
+            padding: 1rem 1.5rem !important;
+            touch-action: manipulation;
+        }
+
+        /* Doctor and date cards - larger touch targets */
+        #doctors-grid .card-primary,
+        #dates-grid .card-primary {
+            min-height: 150px;
+            padding: 2rem !important;
+        }
+
+        #doctors-grid .card-primary i,
+        #dates-grid .card-primary i {
+            font-size: 4rem !important;
+        }
+
+        #doctors-grid .card-primary h3,
+        #dates-grid .card-primary h3 {
+            font-size: 1.5rem !important;
+        }
+
+        /* Hour buttons - optimized for touch */
+        #hours-grid button {
+            min-height: 80px !important;
+            min-width: 120px !important;
+            font-size: 1.5rem !important;
+        }
+
+        /* Specialty grid - better spacing for touch */
+        #specialties-grid {
+            gap: 2rem !important;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
         /* Estilos para los botones y tarjetas, para que coincidan con tu marca */
+        /* 🔥 TOUCH OPTIMIZED: Botones y tarjetas con tamaños mínimos para pantallas táctiles */
         .card-primary {
             background-color: white;
             border-radius: 1.5rem;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             cursor: pointer;
+            min-height: 100px; /* Touch-friendly minimum height */
         }
         .card-primary:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(0, 82, 155, 0.15);
         }
+        .card-primary:active {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 82, 155, 0.2);
+        }
+
+        /* Primary buttons - 80px minimum height for kiosks */
         .btn-primary {
             background-color: #00529B;
             color: white;
             font-weight: bold;
-            padding: 1rem 2.5rem;
-            border-radius: 0.75rem;
-            transition: background-color 0.3s ease;
-            font-size: 1.25rem;
+            padding: 1.5rem 3rem;
+            border-radius: 1rem;
+            transition: all 0.2s ease;
+            font-size: 1.5rem;
+            min-height: 80px;
+            min-width: 200px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-primary:hover {
             background-color: #003d73;
+            transform: scale(1.02);
         }
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        /* Secondary buttons */
         .btn-secondary {
-            background-color: #dc2626; /* Rojo */
+            background-color: #dc2626;
             color: white;
             font-weight: bold;
-            padding: 0.75rem 2rem;
-            border-radius: 0.75rem;
-            transition: background-color 0.3s ease;
-            font-size: 1rem;
+            padding: 1.25rem 2.5rem;
+            border-radius: 1rem;
+            transition: all 0.2s ease;
+            font-size: 1.25rem;
+            min-height: 70px;
+            min-width: 180px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-secondary:hover {
             background-color: #b91c1c;
+            transform: scale(1.02);
         }
+        .btn-secondary:active {
+            transform: scale(0.98);
+        }
+
+        /* Gray buttons */
         .btn-gray {
-            background-color: #6b7280; /* Gris */
+            background-color: #6b7280;
             color: white;
             font-weight: bold;
-            padding: 0.75rem 2rem;
-            border-radius: 0.75rem;
-            transition: background-color 0.3s ease;
-            font-size: 1rem;
+            padding: 1.25rem 2.5rem;
+            border-radius: 1rem;
+            transition: all 0.2s ease;
+            font-size: 1.25rem;
+            min-height: 70px;
+            min-width: 180px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-gray:hover {
             background-color: #4b5563;
+            transform: scale(1.02);
+        }
+        .btn-gray:active {
+            transform: scale(0.98);
         }
         .hidden {
             display: none !important;
@@ -607,6 +703,7 @@
     <script src="js/cart.js"></script>
     <script src="js/cartItemBuilder.js"></script>
     <script src="js/navigation.js"></script>
+    <script src="js/inactivityTimer.js"></script>
     <script src="js/search.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
