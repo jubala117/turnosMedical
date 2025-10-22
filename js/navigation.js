@@ -110,6 +110,28 @@ const NavigationManager = {
      * Cancel all and return to start
      */
     cancelAll() {
+        // 🔥 NUEVO: Confirmación para acción crítica
+        if (typeof CartManager !== 'undefined' && !CartManager.isEmpty()) {
+            const confirmed = confirm(
+                '¿Estás seguro de que deseas cancelar?\n\n' +
+                `Tienes ${CartManager.getItemCount()} servicio(s) en el carrito que se perderán.`
+            );
+
+            if (!confirmed) {
+                return; // User cancelled the cancellation
+            }
+        }
+
+        // Clear cart
+        if (typeof CartManager !== 'undefined') {
+            CartManager.clearCart();
+        }
+
+        // Clear cart item builder
+        if (typeof CartItemBuilder !== 'undefined') {
+            CartItemBuilder.cancel();
+        }
+
         // Reset history
         this.history = ['screen-cedula'];
 
