@@ -34,10 +34,23 @@ Esta guía te ayudará a configurar y entender rápidamente el proyecto del kios
 turnosMedical/
 ├── API/                          # Endpoints principales
 │   ├── verificar_paciente.php    # ✅ FUNCIONAL
+│   ├── get_examenes_eco.php      # ✅ OPTIMIZADO (N+1 fix)
+│   ├── utils.php                 # ✅ NUEVO - Utilidades compartidas
 │   ├── get_especialidades.php    # Por verificar
 │   └── ... más APIs
-├── kiosco.html                   # Interfaz principal
-├── db_connect.inc.php            # Conexión a BD local
+├── js/                           # Módulos JavaScript
+│   ├── api.js                    # ✅ OPTIMIZADO - Sin duplicación
+│   ├── utils.js                  # ✅ OPTIMIZADO - Memoización
+│   ├── toast.js                  # ✅ NUEVO - Notificaciones
+│   ├── loading.js                # ✅ NUEVO - Estados de carga
+│   └── eventManager.js           # ✅ NUEVO - Gestión de eventos
+├── css/                          # Estilos
+│   ├── input.css                 # Fuente TailwindCSS
+│   └── output.css                # ✅ COMPILADO - 14KB (antes 3MB)
+├── kiosco.html                   # ✅ OPTIMIZADO - Accesibilidad WCAG 2.1
+├── db_connect.inc.php            # ✅ OPTIMIZADO - Variables de entorno
+├── database/
+│   └── optimize_indexes.sql      # ✅ NUEVO - Optimización BD
 └── Archivos de diagnóstico/
     ├── test_conexion.php         # Verificar BD
     └── check_database_structure.php # Estructura de tablas
@@ -128,20 +141,117 @@ C:\xampp\php\logs\
 C:\xampp\mysql\data\
 ```
 
+## 🧪 Testing de Funcionalidades (Consola del Navegador)
+
+### Probar Sistema de Notificaciones Toast
+```javascript
+// Toast de éxito
+ToastNotification.success('¡Operación exitosa!');
+
+// Toast de error
+ToastNotification.error('Ha ocurrido un error');
+
+// Toast de advertencia
+ToastNotification.warning('Ten cuidado con esto');
+
+// Toast de información
+ToastNotification.info('Información importante', 5000); // 5 segundos
+```
+
+### Probar Estados de Carga
+```javascript
+// Mostrar loading
+const loaderId = LoadingState.show('Procesando datos...');
+
+// Ocultar después de 3 segundos
+setTimeout(() => LoadingState.hide(loaderId), 3000);
+
+// Usar con función async
+LoadingState.withLoading(async () => {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    console.log('Tarea completada');
+}, 'Ejecutando tarea...');
+```
+
+### Verificar Memoización de Búsqueda
+```javascript
+// Primera búsqueda (sin cache)
+console.time('Primera búsqueda');
+Utils.calcularDistanciaLevenshtein('cardiologia', 'cardiología');
+console.timeEnd('Primera búsqueda');
+
+// Segunda búsqueda (con cache)
+console.time('Segunda búsqueda');
+Utils.calcularDistanciaLevenshtein('cardiologia', 'cardiología');
+console.timeEnd('Segunda búsqueda'); // Debería ser más rápida
+
+// Limpiar cache
+Utils.clearLevenshteinCache();
+```
+
+### Verificar Event Manager
+```javascript
+// Ver listeners registrados
+console.log('Global listeners:', EventManager.globalListeners.length);
+console.log('Element listeners:', EventManager.listeners.size);
+
+// Agregar listener gestionado
+const button = document.querySelector('button');
+const removeListener = addManagedListener(button, 'click', () => {
+    console.log('Click detectado');
+});
+
+// Remover listener
+removeListener();
+```
+
+### Verificar Cache de API
+```javascript
+// Ver estadísticas del cache
+console.log('Cache hits:', ApiService.cacheHits);
+console.log('Cache misses:', ApiService.cacheMisses);
+console.log('Cache hit rate:',
+    (ApiService.cacheHits / (ApiService.cacheHits + ApiService.cacheMisses) * 100).toFixed(2) + '%'
+);
+
+// Limpiar cache
+ApiService.clearCache();
+```
+
 ## 🎯 Próximos Pasos Sugeridos
 
-### Prioridad Alta
+### ✅ Completado
+- **Fase 1**: Optimizaciones críticas (N+1 fix, CSS compilado, accesibilidad)
+- **Fase 2**: UX avanzada (toast, loading, event manager, memoización)
+
+### 🔄 Fase 3 - PWA y Funcionalidades Avanzadas (Siguiente)
+1. **Progressive Web App**
+   - Service Worker para cache offline
+   - Manifest.json para instalación
+   - App-like experience
+
+2. **Búsqueda Avanzada**
+   - Índice reverso de sinónimos
+   - Sistema de clasificación genérico
+   - Búsqueda fuzzy mejorada
+
+3. **Monitoreo**
+   - Performance monitoring
+   - Error tracking
+   - Analytics de uso
+
+### Prioridad Alta (Funcionalidad)
 1. Verificar funcionamiento de `get_especialidades.php`
 2. Probar flujo completo de agendamiento
 3. Implementar lógica de precios Club Medical
 
-### Prioridad Media
+### Prioridad Media (Mejoras)
 1. Crear tabla `tipopaciente` para ISSFA
-2. Implementar sistema de logs
-3. Agregar validaciones adicionales
+2. Agregar validaciones adicionales
+3. Implementar rate limiting
 
-### Prioridad Baja
-1. Migrar a framework PHP
+### Prioridad Baja (Arquitectura)
+1. Migrar a framework PHP (Lumen/Laravel)
 2. Implementar autenticación JWT
 3. Crear panel administrativo
 
