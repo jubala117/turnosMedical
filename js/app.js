@@ -69,6 +69,14 @@ class AppController {
                 UIManager.estado.currentPatientName = data.nombre;
                 UIManager.elementos.patientNameSpan.textContent = data.nombre;
 
+                // 🔥 NUEVO: Actualizar información del paciente en el header
+                if (typeof NavigationManager !== 'undefined') {
+                    NavigationManager.setPatientInfo({
+                        nombre: data.nombre,
+                        cedula: UIManager.elementos.cedulaInput.value
+                    });
+                }
+
                 Logger.success('Paciente verificado:', { id: data.idPersona, issfa: data.issfa, clubMedical: data.clubMedical });
 
                 await AppController.cargarEspecialidades();

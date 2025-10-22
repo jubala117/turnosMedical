@@ -158,16 +158,21 @@ class Utils {
         if (pantallaActual && pantallaActual.id === 'screen-examenes' && screenId !== 'screen-examenes') {
             Utils.limpiarBusquedaCompleta();
         }
-        
+
         document.querySelectorAll('.screen').forEach(screen => {
             screen.classList.remove('active');
         });
         const activeScreen = document.getElementById(screenId);
         if (activeScreen) {
             activeScreen.classList.add('active');
-            
+
             // 🔥 NUEVO: Scroll automático al top cuando se cambia de pantalla
             window.scrollTo(0, 0);
+
+            // 🔥 NUEVO: Integración con NavigationManager
+            if (typeof NavigationManager !== 'undefined') {
+                NavigationManager.navigateTo(screenId);
+            }
         }
     }
 
