@@ -131,8 +131,15 @@ try {
 
         // ID: 15 - RAYOS X
         15 => null,
+
         // ID: 16 - OPTOMETRÍA
-        16 => null,
+        16 => [
+            'particular' => null,
+            'club' => null,
+            'tabla' => 'servicio',
+            'precioFijo' => ['particular' => 5, 'club' => 0]  // $5 particular, Gratis para club
+        ],
+
         // ID: 21 - LABORATORIO
         21 => null,
         // ID: 23 - IMAGEN
