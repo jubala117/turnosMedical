@@ -107,9 +107,9 @@ try {
         // ID: 2 - MEDICINA GENERAL
         2 => ['particular' => 560, 'club' => 668],
         // ID: 8 - PEDIATRÍA
-        8 => ['particular' => 624, 'club' => 669],
+        8 => ['particular' => 1417, 'club' => 669], //Club medica revisar precio, dice $15 cuando es $25
         // ID: 11 - GINECOLOGÍA
-        11 => ['particular' => 675, 'club' => 699],
+        11 => ['particular' => 675, 'club' => 670],
         // ID: 15 - RAYOS X
         15 => null,
         // ID: 16 - OPTOMETRÍA
