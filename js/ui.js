@@ -147,15 +147,19 @@ class UIManager {
         } else {
             const precios = especialidad.precios;
             const precioRegular = precios.particular;
-            const precioClub = precios.clubMedical || 'N/A';
+            const precioClub = precios.clubMedical;
+
+            // Formatear precios (mostrar "Gratis" si es 0)
+            const textoRegular = precioRegular === 0 ? 'Gratis' : `$${precioRegular}`;
+            const textoClub = precioClub === null ? 'N/A' : (precioClub === 0 ? 'Gratis' : `$${precioClub}`);
 
             return `
                 <div class="mt-3 space-y-2">
                     <button class="w-full py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors precio-btn" data-tipo="regular" data-precio="${precioRegular}" data-especialidad="${especialidad.idEspecialidad}">
-                        Precio particular: ${precioRegular}
+                        Precio particular: ${textoRegular}
                     </button>
                     <button class="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors precio-btn" data-tipo="club" data-precio="${precioClub}" data-especialidad="${especialidad.idEspecialidad}">
-                        Club Medical: ${precioClub}
+                        Club Medical: ${textoClub}
                     </button>
                 </div>
             `;
@@ -364,9 +368,10 @@ class UIManager {
             if (opcion.particular !== null) {
                 const btnParticular = document.createElement('button');
                 btnParticular.className = 'flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors';
+                const precioParticularTexto = opcion.particular === 0 ? 'Gratis' : `$${opcion.particular.toFixed(2)}`;
                 btnParticular.innerHTML = `
                     <div class="text-xs text-gray-600 mb-1">Precio Particular</div>
-                    <div class="text-lg font-bold">$${opcion.particular.toFixed(2)}</div>
+                    <div class="text-lg font-bold">${precioParticularTexto}</div>
                 `;
                 btnParticular.addEventListener('click', () => {
                     UIManager.seleccionarOpcion(especialidad, opcion, 'particular');
@@ -379,9 +384,10 @@ class UIManager {
             if (opcion.clubMedical !== null) {
                 const btnClub = document.createElement('button');
                 btnClub.className = 'flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors';
+                const precioClubTexto = opcion.clubMedical === 0 ? 'Gratis' : `$${opcion.clubMedical.toFixed(2)}`;
                 btnClub.innerHTML = `
                     <div class="text-xs text-blue-100 mb-1">Club Medical</div>
-                    <div class="text-lg font-bold">$${opcion.clubMedical.toFixed(2)}</div>
+                    <div class="text-lg font-bold">${precioClubTexto}</div>
                 `;
                 btnClub.addEventListener('click', () => {
                     // Verificar si es miembro de Club Medical
