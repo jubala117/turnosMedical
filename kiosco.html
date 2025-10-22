@@ -147,6 +147,143 @@
             background-color: #b91c1c;
             transform: scale(1.05);
         }
+
+        /* Sidebar Layout */
+        .kiosk-sidebar {
+            position: fixed;
+            left: 0;
+            top: 80px; /* Below header */
+            bottom: 80px; /* Above footer */
+            width: 300px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 90;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .kiosk-sidebar.active {
+            display: flex;
+        }
+
+        /* Adjust main content when sidebar is active */
+        body.sidebar-active .screen {
+            margin-left: 300px;
+            width: calc(100% - 300px);
+        }
+
+        body.sidebar-active .kiosk-footer {
+            left: 300px;
+            width: calc(100% - 300px);
+        }
+
+        /* Sidebar sections */
+        .sidebar-section {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Sidebar specialty items */
+        .sidebar-specialty {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-specialty:hover {
+            background-color: #f3f4f6;
+        }
+
+        .sidebar-specialty.active {
+            background-color: #dbeafe;
+            border-left: 4px solid #00529B;
+        }
+
+        .sidebar-specialty-icon {
+            font-size: 1.25rem;
+            color: #00529B;
+            width: 28px;
+            text-align: center;
+        }
+
+        .sidebar-specialty-name {
+            font-size: 0.875rem;
+            color: #374151;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        /* Shopping cart in sidebar */
+        .sidebar-cart {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .sidebar-cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .sidebar-cart-item {
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .sidebar-cart-item-name {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar-cart-item-details {
+            color: #6b7280;
+            font-size: 0.7rem;
+        }
+
+        .sidebar-cart-item-price {
+            color: #00529B;
+            font-weight: 700;
+            margin-top: 0.25rem;
+        }
+
+        .sidebar-cart-total {
+            background: #00529B;
+            color: white;
+            padding: 1rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-cart-empty {
+            text-align: center;
+            color: #9ca3af;
+            padding: 2rem 1rem;
+            font-size: 0.875rem;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
@@ -283,6 +420,51 @@
             <i class="fas fa-arrow-right" aria-hidden="true"></i>
         </button>
     </footer>
+
+    <!-- Sidebar Menu -->
+    <aside class="kiosk-sidebar" id="kiosk-sidebar" aria-label="Menú de navegación y carrito">
+        <!-- Specialties Section -->
+        <div class="sidebar-section">
+            <h2 class="sidebar-section-title">Servicios</h2>
+            <div id="sidebar-specialties-list">
+                <!-- Specialty items will be loaded dynamically -->
+                <div class="sidebar-specialty" data-category="consultas">
+                    <i class="fas fa-stethoscope sidebar-specialty-icon" aria-hidden="true"></i>
+                    <span class="sidebar-specialty-name">Consultas Médicas</span>
+                </div>
+                <div class="sidebar-specialty" data-category="examenes">
+                    <i class="fas fa-flask sidebar-specialty-icon" aria-hidden="true"></i>
+                    <span class="sidebar-specialty-name">Exámenes</span>
+                </div>
+                <div class="sidebar-specialty" data-category="odontologia">
+                    <i class="fas fa-tooth sidebar-specialty-icon" aria-hidden="true"></i>
+                    <span class="sidebar-specialty-name">Odontología</span>
+                </div>
+                <div class="sidebar-specialty" data-category="rayosx">
+                    <i class="fas fa-x-ray sidebar-specialty-icon" aria-hidden="true"></i>
+                    <span class="sidebar-specialty-name">Rayos X</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Shopping Cart Section -->
+        <div class="sidebar-section sidebar-cart">
+            <h2 class="sidebar-section-title">
+                <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                Mi Carrito (<span id="cart-item-count">0</span>)
+            </h2>
+            <div class="sidebar-cart-items" id="sidebar-cart-items">
+                <div class="sidebar-cart-empty" id="cart-empty-message">
+                    <i class="fas fa-cart-plus" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;" aria-hidden="true"></i>
+                    Selecciona servicios para agendar
+                </div>
+            </div>
+            <div class="sidebar-cart-total" id="sidebar-cart-total">
+                <span>Total:</span>
+                <span id="cart-total-amount">$0.00</span>
+            </div>
+        </div>
+    </aside>
 
     <!-- Pantalla de Cédula -->
     <div id="screen-cedula" class="screen active flex-col items-center justify-center p-8" role="main" aria-labelledby="titulo-cedula">
