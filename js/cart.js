@@ -88,11 +88,7 @@ const CartManager = {
         this.renderCart();
         this.notifyListeners('add', item);
 
-        // Show success toast
-        if (typeof ToastNotification !== 'undefined') {
-            ToastNotification.success(`${item.name} agregado al carrito`);
-        }
-
+        // No mostramos toast aquí - se muestra en el flujo que llama addItem
         console.log('Item added to cart:', item);
         return true;
     },
@@ -117,7 +113,7 @@ const CartManager = {
         this.renderCart();
         this.notifyListeners('remove', removedItem);
 
-        // Show toast
+        // Sí mostramos toast al eliminar
         if (typeof ToastNotification !== 'undefined') {
             ToastNotification.info(`${removedItem.name} eliminado del carrito`);
         }
@@ -162,11 +158,7 @@ const CartManager = {
         this.renderCart();
         this.notifyListeners('clear', null);
 
-        // Show toast
-        if (typeof ToastNotification !== 'undefined') {
-            ToastNotification.info(`Carrito vaciado (${itemCount} ${itemCount === 1 ? 'item' : 'items'})`);
-        }
-
+        // No mostramos toast al vaciar - se maneja en el flujo
         console.log('Cart cleared');
     },
 

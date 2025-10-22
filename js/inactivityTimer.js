@@ -10,8 +10,8 @@ const InactivityTimer = {
     resetTime: 120, // Reset after 120 seconds total
 
     // Timer IDs
-    warningTimer: null,
-    resetTimer: null,
+    warningTimerId: null,
+    resetTimerId: null,
 
     // Warning modal reference
     warningModal: null,
@@ -45,8 +45,12 @@ const InactivityTimer = {
     setupEventListeners() {
         const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
 
+        const resetHandler = () => {
+            this.resetTimer();
+        };
+
         events.forEach(event => {
-            document.addEventListener(event, () => this.resetTimer(), true);
+            document.addEventListener(event, resetHandler, true);
         });
     },
 
@@ -60,12 +64,12 @@ const InactivityTimer = {
         this.clearTimers();
 
         // Start warning timer
-        this.warningTimer = setTimeout(() => {
+        this.warningTimerId = setTimeout(() => {
             this.showWarning();
         }, this.warningTime * 1000);
 
         // Start reset timer
-        this.resetTimer = setTimeout(() => {
+        this.resetTimerId = setTimeout(() => {
             this.resetSession();
         }, this.resetTime * 1000);
     },
@@ -77,7 +81,7 @@ const InactivityTimer = {
         if (!this.enabled) return;
 
         // If warning is showing, hide it
-        if (this.warningModal) {
+        if (this.warningModal && !this.warningModal.classList.contains('hidden')) {
             this.hideWarning();
         }
 
@@ -89,14 +93,14 @@ const InactivityTimer = {
      * Clear all timers
      */
     clearTimers() {
-        if (this.warningTimer) {
-            clearTimeout(this.warningTimer);
-            this.warningTimer = null;
+        if (this.warningTimerId) {
+            clearTimeout(this.warningTimerId);
+            this.warningTimerId = null;
         }
 
-        if (this.resetTimer) {
-            clearTimeout(this.resetTimer);
-            this.resetTimer = null;
+        if (this.resetTimerId) {
+            clearTimeout(this.resetTimerId);
+            this.resetTimerId = null;
         }
 
         if (this.countdownInterval) {
@@ -182,14 +186,21 @@ const InactivityTimer = {
 
         // Add click handler to continue button
         const continueBtn = modal.querySelector('#continue-session-btn');
-        continueBtn.addEventListener('click', () => {
-            this.resetTimer();
-        });
+        if (continueBtn) {
+            continueBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                console.log('Continue button clicked');
+                this.hideWarning();
+                this.startTimer();
+            });
+        }
 
         // Also close on modal background click
         modal.addEventListener('click', (e) => {
             if (e.target === modal) {
-                this.resetTimer();
+                console.log('Modal background clicked');
+                this.hideWarning();
+                this.startTimer();
             }
         });
 
