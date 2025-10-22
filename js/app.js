@@ -491,9 +491,26 @@ class AppController {
             UIManager.mostrarModalClubMedical();
             return;
         }
-        
+
         console.log(`Examen seleccionado: ${descripcion}, Precio: ${precio}, Tipo: ${tipo}`);
-        Utils.mostrarExito(`Has seleccionado: ${descripcion}\nPrecio: $${precio.toFixed(2)}`);
+
+        // 🔥 NUEVO: Agregar examen al carrito
+        if (typeof CartItemBuilder !== 'undefined') {
+            const examItem = {
+                id: descripcion, // Use descripcion as ID for now
+                descripcion: descripcion
+            };
+
+            CartItemBuilder.startExam(examItem, precio, tipo);
+            const success = CartItemBuilder.addToCart();
+
+            if (success) {
+                ToastNotification.success(`✓ ${descripcion} agregado al carrito`);
+            }
+        } else {
+            // Flujo antiguo
+            Utils.mostrarExito(`Has seleccionado: ${descripcion}\nPrecio: $${precio.toFixed(2)}`);
+        }
     }
 
     // Seleccionar servicio odontológico
@@ -507,9 +524,26 @@ class AppController {
             UIManager.mostrarModalClubMedical();
             return;
         }
-        
+
         console.log(`Servicio odontológico seleccionado: ${servicio}, Precio: ${precio}, Tipo: ${tipo}`);
-        Utils.mostrarExito(`Has seleccionado: ${servicio}\nPrecio: $${precio.toFixed(2)}`);
+
+        // 🔥 NUEVO: Agregar servicio al carrito
+        if (typeof CartItemBuilder !== 'undefined') {
+            const serviceItem = {
+                id: servicio,
+                descripcion: servicio
+            };
+
+            CartItemBuilder.startExam(serviceItem, precio, tipo);
+            const success = CartItemBuilder.addToCart();
+
+            if (success) {
+                ToastNotification.success(`✓ ${servicio} agregado al carrito`);
+            }
+        } else {
+            // Flujo antiguo
+            Utils.mostrarExito(`Has seleccionado: ${servicio}\nPrecio: $${precio.toFixed(2)}`);
+        }
     }
 }
 
