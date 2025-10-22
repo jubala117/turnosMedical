@@ -411,8 +411,8 @@ class UIManager {
         const modalFooter = document.createElement('div');
         modalFooter.className = 'bg-gray-50 p-4 rounded-b-lg border-t border-gray-200';
         const btnCancelar = document.createElement('button');
-        btnCancelar.className = 'w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors';
-        btnCancelar.textContent = 'Cancelar';
+        btnCancelar.className = 'w-full py-3 px-4 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold transition-colors shadow-md';
+        btnCancelar.innerHTML = '<i class="fas fa-times mr-2"></i>Cancelar';
         btnCancelar.addEventListener('click', () => modalOverlay.remove());
         modalFooter.appendChild(btnCancelar);
 
