@@ -243,9 +243,8 @@ const NavigationManager = {
      */
     updateFooterButtons(screenId) {
         const backBtn = document.getElementById('footer-back-btn');
-        const continueBtn = document.getElementById('footer-continue-btn');
 
-        if (!backBtn || !continueBtn) return;
+        if (!backBtn) return;
 
         // Back button: show on all screens except first
         if (screenId === 'screen-cedula') {
@@ -254,14 +253,7 @@ const NavigationManager = {
             backBtn.classList.remove('hidden');
         }
 
-        // Continue button: hide on first and last screen, show on others
-        if (screenId === 'screen-cedula' || screenId === 'screen-pago') {
-            continueBtn.classList.add('hidden');
-        } else {
-            // Show but keep disabled until selection is made
-            continueBtn.classList.remove('hidden');
-            // Will be enabled by individual screen logic when selection is made
-        }
+        // Continue button removed - using cart flow now
     },
 
     /**
@@ -315,38 +307,7 @@ const NavigationManager = {
         this.hideSidebar();
     },
 
-    /**
-     * Enable/disable continue button
-     * @param {boolean} enabled - Whether button should be enabled
-     */
-    setContinueEnabled(enabled) {
-        const continueBtn = document.getElementById('footer-continue-btn');
-        if (!continueBtn) return;
-
-        if (enabled) {
-            continueBtn.disabled = false;
-        } else {
-            continueBtn.disabled = true;
-        }
-    },
-
-    /**
-     * Set click handler for continue button
-     * @param {Function} handler - Click handler function
-     */
-    setContinueHandler(handler) {
-        const continueBtn = document.getElementById('footer-continue-btn');
-        if (!continueBtn) return;
-
-        // Remove existing handler
-        const newBtn = continueBtn.cloneNode(true);
-        continueBtn.parentNode.replaceChild(newBtn, continueBtn);
-
-        // Add new handler
-        if (handler) {
-            addManagedListener(newBtn, 'click', handler);
-        }
-    },
+    // Continue button methods removed - using cart flow now
 
     /**
      * Reset navigation state
