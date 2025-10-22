@@ -93,6 +93,13 @@ class AppController {
         try {
             const especialidades = await ApiService.obtenerEspecialidades(UIManager.estado.currentPatientId);
             UIManager.renderizarEspecialidades(especialidades);
+
+            // 🔥 NUEVO: Mostrar sidebar y cargar categorías
+            if (typeof NavigationManager !== 'undefined') {
+                NavigationManager.showSidebar();
+                NavigationManager.loadSidebarSpecialties(especialidades);
+            }
+
             Utils.mostrarPantalla('screen-especialidad');
         } catch (error) {
             Utils.mostrarError(error.message);

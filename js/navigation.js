@@ -49,6 +49,7 @@ const NavigationManager = {
     init() {
         this.setupEventListeners();
         this.updateUI('screen-cedula');
+        this.setupSidebar();
     },
 
     /**
@@ -135,6 +136,21 @@ const NavigationManager = {
         this.updateBreadcrumbs(screenId);
         this.updateFooterButtons(screenId);
         this.updateHeaderButtons(screenId);
+        this.updateSidebarVisibility(screenId);
+    },
+
+    /**
+     * Update sidebar visibility based on current screen
+     * @param {string} screenId - Current screen ID
+     */
+    updateSidebarVisibility(screenId) {
+        // Show sidebar on all screens except first (cedula)
+        if (screenId === 'screen-cedula') {
+            this.hideSidebar();
+        } else if (this.currentPatient !== null) {
+            // Only show sidebar if patient is verified
+            this.showSidebar();
+        }
     },
 
     /**
@@ -272,6 +288,9 @@ const NavigationManager = {
 
         if (nameElement) nameElement.textContent = '';
         if (cedulaElement) cedulaElement.textContent = '';
+
+        // Hide sidebar when patient info is cleared
+        this.hideSidebar();
     },
 
     /**
@@ -314,6 +333,172 @@ const NavigationManager = {
         this.history = ['screen-cedula'];
         this.currentPatient = null;
         this.updateUI('screen-cedula');
+        this.hideSidebar();
+    },
+
+    /**
+     * Setup sidebar interactions
+     */
+    setupSidebar() {
+        // Sidebar specialty navigation
+        const sidebarSpecialties = document.querySelectorAll('.sidebar-specialty');
+        sidebarSpecialties.forEach(specialty => {
+            addManagedListener(specialty, 'click', () => {
+                const category = specialty.getAttribute('data-category');
+                this.handleSidebarCategoryClick(category);
+            });
+        });
+    },
+
+    /**
+     * Handle sidebar category click
+     * @param {string} category - Category identifier
+     */
+    handleSidebarCategoryClick(category) {
+        console.log('Sidebar category clicked:', category);
+
+        // Update active state
+        document.querySelectorAll('.sidebar-specialty').forEach(item => {
+            item.classList.remove('active');
+        });
+        const clickedItem = document.querySelector(`[data-category="${category}"]`);
+        if (clickedItem) {
+            clickedItem.classList.add('active');
+        }
+
+        // Navigate based on category
+        switch (category) {
+            case 'consultas':
+                if (typeof AppController !== 'undefined') {
+                    showScreen('screen-especialidad');
+                }
+                break;
+            case 'examenes':
+                if (typeof AppController !== 'undefined') {
+                    AppController.cargarExamenesImagen();
+                }
+                break;
+            case 'odontologia':
+                if (typeof AppController !== 'undefined') {
+                    AppController.cargarServiciosOdontologia();
+                }
+                break;
+            case 'rayosx':
+                if (typeof AppController !== 'undefined') {
+                    AppController.cargarRayosX();
+                }
+                break;
+        }
+    },
+
+    /**
+     * Show sidebar
+     */
+    showSidebar() {
+        const sidebar = document.getElementById('kiosk-sidebar');
+        const body = document.body;
+
+        if (sidebar) {
+            sidebar.classList.add('active');
+        }
+
+        if (body) {
+            body.classList.add('sidebar-active');
+        }
+    },
+
+    /**
+     * Hide sidebar
+     */
+    hideSidebar() {
+        const sidebar = document.getElementById('kiosk-sidebar');
+        const body = document.body;
+
+        if (sidebar) {
+            sidebar.classList.remove('active');
+        }
+
+        if (body) {
+            body.classList.remove('sidebar-active');
+        }
+    },
+
+    /**
+     * Update sidebar based on loaded specialties
+     * @param {Array} especialidades - Array of specialty objects
+     */
+    updateSidebarWithSpecialties(especialidades) {
+        const sidebarList = document.getElementById('sidebar-specialties-list');
+        if (!sidebarList) return;
+
+        // Clear existing items except static categories
+        // For now, keep static categories. In future, could populate dynamically
+        console.log('Sidebar: Loaded', especialidades.length, 'specialties');
+    },
+
+    /**
+     * Load specialties into sidebar
+     * @param {Array} especialidades - Array of specialty objects
+     */
+    loadSidebarSpecialties(especialidades) {
+        const sidebarList = document.getElementById('sidebar-specialties-list');
+        if (!sidebarList) return;
+
+        // Clear existing
+        sidebarList.innerHTML = '';
+
+        // Group specialties by category (could be enhanced later)
+        // For now, create a "Todas las Especialidades" expandable list
+        const consultasDiv = document.createElement('div');
+        consultasDiv.className = 'sidebar-specialty';
+        consultasDiv.setAttribute('data-category', 'consultas');
+        consultasDiv.innerHTML = `
+            <i class="fas fa-stethoscope sidebar-specialty-icon" aria-hidden="true"></i>
+            <span class="sidebar-specialty-name">Consultas Médicas</span>
+        `;
+        addManagedListener(consultasDiv, 'click', () => {
+            this.handleSidebarCategoryClick('consultas');
+        });
+        sidebarList.appendChild(consultasDiv);
+
+        // Exámenes
+        const examenesDiv = document.createElement('div');
+        examenesDiv.className = 'sidebar-specialty';
+        examenesDiv.setAttribute('data-category', 'examenes');
+        examenesDiv.innerHTML = `
+            <i class="fas fa-flask sidebar-specialty-icon" aria-hidden="true"></i>
+            <span class="sidebar-specialty-name">Exámenes</span>
+        `;
+        addManagedListener(examenesDiv, 'click', () => {
+            this.handleSidebarCategoryClick('examenes');
+        });
+        sidebarList.appendChild(examenesDiv);
+
+        // Odontología
+        const odontologiaDiv = document.createElement('div');
+        odontologiaDiv.className = 'sidebar-specialty';
+        odontologiaDiv.setAttribute('data-category', 'odontologia');
+        odontologiaDiv.innerHTML = `
+            <i class="fas fa-tooth sidebar-specialty-icon" aria-hidden="true"></i>
+            <span class="sidebar-specialty-name">Odontología</span>
+        `;
+        addManagedListener(odontologiaDiv, 'click', () => {
+            this.handleSidebarCategoryClick('odontologia');
+        });
+        sidebarList.appendChild(odontologiaDiv);
+
+        // Rayos X
+        const rayosDiv = document.createElement('div');
+        rayosDiv.className = 'sidebar-specialty';
+        rayosDiv.setAttribute('data-category', 'rayosx');
+        rayosDiv.innerHTML = `
+            <i class="fas fa-x-ray sidebar-specialty-icon" aria-hidden="true"></i>
+            <span class="sidebar-specialty-name">Rayos X</span>
+        `;
+        addManagedListener(rayosDiv, 'click', () => {
+            this.handleSidebarCategoryClick('rayosx');
+        });
+        sidebarList.appendChild(rayosDiv);
     }
 };
 
