@@ -227,7 +227,7 @@ try {
         91 => [
             'opciones' => [
                 [
-                    'nombre' => 'Primera Vez',
+                    'nombre' => 'Primera Sesión',
                     'particular' => 796,
                     'club' => 748,
                     'tabla' => 'servicio'
