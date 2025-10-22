@@ -27,11 +27,125 @@
         }
         .screen {
             display: none; /* Todas las pantallas ocultas por defecto */
-            min-height: 100vh;
+            min-height: calc(100vh - 160px); /* Resta altura de header (80px) + footer (80px) */
+            padding-top: 100px; /* Offset para header fijo */
+            padding-bottom: 100px; /* Offset para footer fijo */
             animation: fadeIn 0.5s;
         }
         .screen.active {
             display: flex; /* La pantalla activa se muestra */
+        }
+
+        /* Fixed Header */
+        .kiosk-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+
+        /* Fixed Footer */
+        .kiosk-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+
+        /* Breadcrumbs */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-item.active {
+            color: #00529B;
+            font-weight: 600;
+        }
+
+        .breadcrumb-separator {
+            color: #d1d5db;
+        }
+
+        /* Touch-optimized buttons in footer */
+        .footer-btn {
+            min-width: 200px;
+            min-height: 60px;
+            font-size: 1.125rem;
+            font-weight: bold;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .footer-btn-back {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        .footer-btn-back:hover:not(:disabled) {
+            background-color: #4b5563;
+            transform: translateY(-2px);
+        }
+
+        .footer-btn-continue {
+            background-color: #00529B;
+            color: white;
+        }
+
+        .footer-btn-continue:hover:not(:disabled) {
+            background-color: #003d73;
+            transform: translateY(-2px);
+        }
+
+        .footer-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .header-cancel-btn {
+            background-color: #dc2626;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .header-cancel-btn:hover {
+            background-color: #b91c1c;
+            transform: scale(1.05);
         }
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -130,6 +244,46 @@
         Saltar al contenido principal
     </a>
 
+    <!-- Fixed Header -->
+    <header class="kiosk-header">
+        <div class="flex items-center gap-4">
+            <img src="images/logo.png" alt="Medical&Care" class="h-12" loading="eager">
+            <div class="flex flex-col">
+                <span id="header-patient-name" class="text-lg font-semibold text-gray-800"></span>
+                <span id="header-patient-cedula" class="text-sm text-gray-500"></span>
+            </div>
+        </div>
+
+        <nav aria-label="Progreso de agendamiento">
+            <ol class="breadcrumb" id="breadcrumb-nav">
+                <li class="breadcrumb-item active">
+                    <i class="fas fa-id-card" aria-hidden="true"></i>
+                    <span>Identificación</span>
+                </li>
+            </ol>
+        </nav>
+
+        <button type="button" id="header-cancel-all" class="header-cancel-btn hidden" aria-label="Cancelar todo y volver al inicio">
+            <i class="fas fa-times" aria-hidden="true"></i>
+            Cancelar Todo
+        </button>
+    </header>
+
+    <!-- Fixed Footer -->
+    <footer class="kiosk-footer">
+        <button type="button" id="footer-back-btn" class="footer-btn footer-btn-back hidden" aria-label="Regresar a la pantalla anterior">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            Regresar
+        </button>
+
+        <div class="flex-1"></div>
+
+        <button type="button" id="footer-continue-btn" class="footer-btn footer-btn-continue hidden" aria-label="Continuar al siguiente paso" disabled>
+            Continuar
+            <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        </button>
+    </footer>
+
     <!-- Pantalla de Cédula -->
     <div id="screen-cedula" class="screen active flex-col items-center justify-center p-8" role="main" aria-labelledby="titulo-cedula">
         <img src="images/logo.png" alt="Logotipo de Medical&Care" class="logo" width="150" height="auto" loading="eager">
@@ -164,9 +318,6 @@
         <div id="specialties-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12" role="list" aria-label="Lista de especialidades médicas" aria-live="polite">
             <!-- Las especialidades se cargarán aquí dinámicamente -->
         </div>
-        <div class="flex space-x-4">
-            <button type="button" class="btn-secondary" onclick="showScreen('screen-cedula')" aria-label="Cancelar agendamiento">Cancelar</button>
-        </div>
     </div>
 
     <!-- Pantalla de Doctores -->
@@ -175,10 +326,6 @@
         <p class="text-xl text-gray-600 mb-12">Estos son los doctores disponibles para la especialidad seleccionada.</p>
         <div id="doctors-grid" class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <!-- Los doctores se cargarán aquí dinámicamente -->
-        </div>
-        <div class="flex space-x-4">
-            <button class="btn-gray" onclick="showScreen('screen-especialidad')">Regresar</button>
-            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
         </div>
     </div>
 
@@ -189,10 +336,6 @@
         <div id="dates-grid" class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <!-- Las fechas se cargarán aquí dinámicamente -->
         </div>
-        <div class="flex space-x-4">
-            <button class="btn-gray" onclick="showScreen('screen-doctores')">Regresar</button>
-            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
-        </div>
     </div>
 
     <!-- Pantalla de Horas -->
@@ -201,10 +344,6 @@
         <p class="text-xl text-gray-600 mb-12">Horas disponibles para el día seleccionado.</p>
         <div id="hours-grid" class="grid grid-cols-3 md:grid-cols-6 gap-4 mb-12">
             <!-- Las horas se cargarán aquí dinámicamente -->
-        </div>
-        <div class="flex space-x-4">
-            <button class="btn-gray" onclick="showScreen('screen-fechas')">Regresar</button>
-            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
         </div>
     </div>
 
@@ -240,10 +379,6 @@
 
         <div id="examenes-grid" class="w-full max-w-5xl space-y-3 mb-12">
             <!-- Los exámenes se cargarán aquí dinámicamente -->
-        </div>
-        <div class="flex space-x-4">
-            <button class="btn-gray" onclick="showScreen('screen-especialidad')">Regresar</button>
-            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
         </div>
     </div>
 
@@ -283,6 +418,7 @@
     <script src="js/eventManager.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/navigation.js"></script>
     <script src="js/search.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
