@@ -79,11 +79,12 @@ class UIManager {
             card.addEventListener('click', () => UIManager.manejarCategoriaEspecial(normalizedName));
         } else {
             // Lógica para especialidades normales con precios
-            const esEspecialidadConOpciones = Utils.esEspecialidadConOpcionesMultiples(especialidad.descEspecialidad);
+            // Usar el campo tieneOpciones que viene del backend
+            const esEspecialidadConOpciones = especialidad.tieneOpciones === true || (especialidad.opciones && especialidad.opciones.length > 0);
             const preciosHTML = UIManager.crearHTMLPrecios(especialidad, esEspecialidadConOpciones);
-            
+
             card.innerHTML = UIManager.crearHTMLEspecialidadNormal(especialidad, imageName, preciosHTML);
-            
+
             if (esEspecialidadConOpciones) {
                 UIManager.configurarEventosOpciones(card, especialidad);
             } else {
@@ -313,26 +314,130 @@ class UIManager {
 
     // Mostrar opciones de especialidad
     static async mostrarOpcionesEspecialidad(especialidad) {
-        // Implementación simplificada - se puede expandir según necesidades
-        const opciones = UIManager.obtenerOpcionesPorEspecialidad(especialidad.descEspecialidad);
-        
-        if (opciones.length > 0) {
-            // Aquí se implementaría el modal de selección de opciones
-            // Por ahora, seleccionamos la primera opción por defecto
-            UIManager.estado.selectedEspecialidad = especialidad.idEspecialidad;
-            UIManager.estado.selectedPrecio = opciones[0].precioRegular;
-            UIManager.estado.selectedTipoPrecio = 'regular';
-            await AppController.cargarDoctores(especialidad.idEspecialidad);
+        // Usar las opciones que vienen del backend
+        const opciones = especialidad.opciones;
+
+        if (!opciones || opciones.length === 0) {
+            ToastNotification.warning('No hay opciones disponibles para esta especialidad');
+            return;
         }
+
+        // Crear y mostrar modal con opciones
+        UIManager.mostrarModalOpciones(especialidad, opciones);
     }
 
-    // Obtener opciones por especialidad
-    static obtenerOpcionesPorEspecialidad(descEspecialidad) {
-        // Implementación simplificada - se puede expandir según necesidades
-        return [
-            { nombre: 'Opción 1', precioRegular: '25.00', precioClub: '20.00' },
-            { nombre: 'Opción 2', precioRegular: '35.00', precioClub: '28.00' }
-        ];
+    // Mostrar modal de opciones
+    static mostrarModalOpciones(especialidad, opciones) {
+        // Crear overlay del modal
+        const modalOverlay = document.createElement('div');
+        modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
+        modalOverlay.id = 'modal-opciones-especialidad';
+
+        // Crear contenido del modal
+        const modalContent = document.createElement('div');
+        modalContent.className = 'bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto';
+
+        // Header del modal
+        const modalHeader = document.createElement('div');
+        modalHeader.className = 'bg-blue-600 text-white p-6 rounded-t-lg';
+        modalHeader.innerHTML = `
+            <h2 class="text-2xl font-bold">${especialidad.descEspecialidad}</h2>
+            <p class="text-blue-100 mt-2">Selecciona una opción para continuar</p>
+        `;
+
+        // Body del modal con opciones
+        const modalBody = document.createElement('div');
+        modalBody.className = 'p-6 space-y-4';
+
+        opciones.forEach((opcion, index) => {
+            const opcionCard = document.createElement('div');
+            opcionCard.className = 'border-2 border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-colors';
+
+            const opcionHeader = document.createElement('h3');
+            opcionHeader.className = 'text-lg font-bold text-gray-800 mb-3';
+            opcionHeader.textContent = opcion.nombre;
+
+            const botonesContainer = document.createElement('div');
+            botonesContainer.className = 'flex gap-3';
+
+            // Botón Particular
+            if (opcion.particular !== null) {
+                const btnParticular = document.createElement('button');
+                btnParticular.className = 'flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors';
+                btnParticular.innerHTML = `
+                    <div class="text-xs text-gray-600 mb-1">Precio Particular</div>
+                    <div class="text-lg font-bold">$${opcion.particular.toFixed(2)}</div>
+                `;
+                btnParticular.addEventListener('click', () => {
+                    UIManager.seleccionarOpcion(especialidad, opcion, 'particular');
+                    modalOverlay.remove();
+                });
+                botonesContainer.appendChild(btnParticular);
+            }
+
+            // Botón Club Medical
+            if (opcion.clubMedical !== null) {
+                const btnClub = document.createElement('button');
+                btnClub.className = 'flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-bold transition-colors';
+                btnClub.innerHTML = `
+                    <div class="text-xs text-blue-100 mb-1">Club Medical</div>
+                    <div class="text-lg font-bold">$${opcion.clubMedical.toFixed(2)}</div>
+                `;
+                btnClub.addEventListener('click', () => {
+                    // Verificar si es miembro de Club Medical
+                    if (!opcion.esClubMedical) {
+                        modalOverlay.remove();
+                        UIManager.mostrarModalClubMedical();
+                        return;
+                    }
+                    UIManager.seleccionarOpcion(especialidad, opcion, 'club');
+                    modalOverlay.remove();
+                });
+                botonesContainer.appendChild(btnClub);
+            }
+
+            opcionCard.appendChild(opcionHeader);
+            opcionCard.appendChild(botonesContainer);
+            modalBody.appendChild(opcionCard);
+        });
+
+        // Footer del modal
+        const modalFooter = document.createElement('div');
+        modalFooter.className = 'bg-gray-50 p-4 rounded-b-lg border-t border-gray-200';
+        const btnCancelar = document.createElement('button');
+        btnCancelar.className = 'w-full py-2 px-4 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg font-medium transition-colors';
+        btnCancelar.textContent = 'Cancelar';
+        btnCancelar.addEventListener('click', () => modalOverlay.remove());
+        modalFooter.appendChild(btnCancelar);
+
+        // Ensamblar modal
+        modalContent.appendChild(modalHeader);
+        modalContent.appendChild(modalBody);
+        modalContent.appendChild(modalFooter);
+        modalOverlay.appendChild(modalContent);
+
+        // Agregar al DOM
+        document.body.appendChild(modalOverlay);
+
+        // Cerrar al hacer click fuera del modal
+        modalOverlay.addEventListener('click', (e) => {
+            if (e.target === modalOverlay) {
+                modalOverlay.remove();
+            }
+        });
+    }
+
+    // Seleccionar opción de especialidad
+    static async seleccionarOpcion(especialidad, opcion, tipo) {
+        UIManager.estado.selectedEspecialidad = especialidad.idEspecialidad;
+        UIManager.estado.selectedPrecio = tipo === 'club' ? opcion.clubMedical : opcion.particular;
+        UIManager.estado.selectedTipoPrecio = tipo;
+        UIManager.estado.selectedOpcionNombre = opcion.nombre;
+        UIManager.estado.selectedIdTipoServicio = tipo === 'club' ? opcion.idTipoServicioClub : opcion.idTipoServicioRegular;
+
+        ToastNotification.success(`Seleccionado: ${opcion.nombre} - $${UIManager.estado.selectedPrecio.toFixed(2)}`);
+
+        await AppController.cargarDoctores(especialidad.idEspecialidad);
     }
 }
 
