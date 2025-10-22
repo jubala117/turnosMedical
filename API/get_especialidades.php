@@ -410,26 +410,41 @@ try {
         }
         // CASO 2: Especialidad SIMPLE (sin opciones)
         else {
-            $precioRegularInfo = null;
-            $precioClubInfo = null;
+            // Verificar si tiene precios fijos (para casos como Optometría)
+            if (isset($mapConfig['precioFijo'])) {
+                $especialidad['precios'] = [
+                    'particular' => floatval($mapConfig['precioFijo']['particular']),
+                    'clubMedical' => floatval($mapConfig['precioFijo']['club']),
+                    'esClubMedical' => $esClubMedical,
+                    'idTipoServicioRegular' => null,
+                    'idTipoServicioClub' => null,
+                    'servicioRegular' => null,
+                    'servicioClub' => null,
+                    'tieneOpciones' => false
+                ];
+            } else {
+                // Buscar precios en la BD normalmente
+                $precioRegularInfo = null;
+                $precioClubInfo = null;
 
-            if ($mapConfig['particular'] && isset($pricesById[$mapConfig['particular']])) {
-                $precioRegularInfo = $pricesById[$mapConfig['particular']];
-            }
-            if ($mapConfig['club'] && isset($pricesById[$mapConfig['club']])) {
-                $precioClubInfo = $pricesById[$mapConfig['club']];
-            }
+                if ($mapConfig['particular'] && isset($pricesById[$mapConfig['particular']])) {
+                    $precioRegularInfo = $pricesById[$mapConfig['particular']];
+                }
+                if ($mapConfig['club'] && isset($pricesById[$mapConfig['club']])) {
+                    $precioClubInfo = $pricesById[$mapConfig['club']];
+                }
 
-            $especialidad['precios'] = [
-                'particular' => $precioRegularInfo ? floatval($precioRegularInfo['precio']) : null,
-                'clubMedical' => $precioClubInfo ? floatval($precioClubInfo['precio']) : null,
-                'esClubMedical' => $esClubMedical,
-                'idTipoServicioRegular' => $precioRegularInfo ? $precioRegularInfo['id'] : null,
-                'idTipoServicioClub' => $precioClubInfo ? $precioClubInfo['id'] : null,
-                'servicioRegular' => $precioRegularInfo ? $precioRegularInfo['servicio'] : null,
-                'servicioClub' => $precioClubInfo ? $precioClubInfo['servicio'] : null,
-                'tieneOpciones' => false
-            ];
+                $especialidad['precios'] = [
+                    'particular' => $precioRegularInfo ? floatval($precioRegularInfo['precio']) : null,
+                    'clubMedical' => $precioClubInfo ? floatval($precioClubInfo['precio']) : null,
+                    'esClubMedical' => $esClubMedical,
+                    'idTipoServicioRegular' => $precioRegularInfo ? $precioRegularInfo['id'] : null,
+                    'idTipoServicioClub' => $precioClubInfo ? $precioClubInfo['id'] : null,
+                    'servicioRegular' => $precioRegularInfo ? $precioRegularInfo['servicio'] : null,
+                    'servicioClub' => $precioClubInfo ? $precioClubInfo['servicio'] : null,
+                    'tieneOpciones' => false
+                ];
+            }
         }
     }
 
