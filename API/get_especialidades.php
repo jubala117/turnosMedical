@@ -259,19 +259,27 @@ try {
         if (isset($map['opciones'])) {
             foreach ($map['opciones'] as $opcion) {
                 $tabla = $opcion['tabla'] ?? 'servicio';
-                $targetArray = ($tabla === 'examen') ? &$examenIds : &$serviceIds;
 
-                if ($opcion['particular']) $targetArray[] = $opcion['particular'];
-                if ($opcion['club']) $targetArray[] = $opcion['club'];
+                if ($tabla === 'examen') {
+                    if ($opcion['particular']) $examenIds[] = $opcion['particular'];
+                    if ($opcion['club']) $examenIds[] = $opcion['club'];
+                } else {
+                    if ($opcion['particular']) $serviceIds[] = $opcion['particular'];
+                    if ($opcion['club']) $serviceIds[] = $opcion['club'];
+                }
             }
         }
         // Si es simple (un solo precio)
         else {
             $tabla = $map['tabla'] ?? 'servicio';
-            $targetArray = ($tabla === 'examen') ? &$examenIds : &$serviceIds;
 
-            if ($map['particular']) $targetArray[] = $map['particular'];
-            if ($map['club']) $targetArray[] = $map['club'];
+            if ($tabla === 'examen') {
+                if ($map['particular']) $examenIds[] = $map['particular'];
+                if ($map['club']) $examenIds[] = $map['club'];
+            } else {
+                if ($map['particular']) $serviceIds[] = $map['particular'];
+                if ($map['club']) $serviceIds[] = $map['club'];
+            }
         }
     }
 
