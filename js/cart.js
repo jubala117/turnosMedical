@@ -79,7 +79,44 @@ const CartManager = {
             };
         }
 
-        // For exams, determine subcategory based on name
+        // For exams, first check if examType property exists (new items)
+        if (item.examType) {
+            switch (item.examType) {
+                case 'laboratorio':
+                    return {
+                        key: 'laboratorio',
+                        name: 'Exámenes de Laboratorio',
+                        priority: 2
+                    };
+                case 'ecografia':
+                    return {
+                        key: 'ecografia',
+                        name: 'Exámenes de Ecografía',
+                        priority: 3
+                    };
+                case 'rayosx':
+                    return {
+                        key: 'rayosx',
+                        name: 'Exámenes de Rayos X',
+                        priority: 4
+                    };
+                case 'odontologia':
+                    return {
+                        key: 'odontologia',
+                        name: 'Servicios Odontológicos',
+                        priority: 5
+                    };
+                default:
+                    // Unknown exam type
+                    return {
+                        key: 'otros',
+                        name: 'Otros Exámenes',
+                        priority: 6
+                    };
+            }
+        }
+
+        // Fallback: For old items without examType, determine subcategory based on name
         const itemName = item.name.toLowerCase();
 
         if (itemName.includes('laboratorio') || itemName.includes('sangre') || itemName.includes('orina') || itemName.includes('heces')) {

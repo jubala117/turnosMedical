@@ -180,7 +180,7 @@ try {
                 ],
                 [
                     'nombre' => 'Media Hora',
-                    'particular' => null, // No definido aún
+                    'particular' => 919, // No definido aún
                     'club' => 919,
                     'tabla' => 'servicio'
                 ]
