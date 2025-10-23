@@ -423,13 +423,20 @@ class UIManager {
             if (opcion.particular !== null) {
                 const btnParticular = document.createElement('button');
                 btnParticular.className = 'flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors';
-                const precioParticularTexto = opcion.particular === 0 ? 'Gratis' : `$${opcion.particular.toFixed(2)}`;
+
+                // 🔥 TEMPORAL: Override para psicología infantil media hora
+                let precioParticular = opcion.particular;
+                if (opcion.nombre && opcion.nombre.toLowerCase().includes('media hora')) {
+                    precioParticular = 15.00; // Temporal hasta encontrar el ID correcto
+                }
+
+                const precioParticularTexto = precioParticular === 0 ? 'Gratis' : `$${precioParticular.toFixed(2)}`;
                 btnParticular.innerHTML = `
                     <div class="text-xs text-gray-600 mb-1">Precio Particular</div>
                     <div class="text-lg font-bold">${precioParticularTexto}</div>
                 `;
                 btnParticular.addEventListener('click', () => {
-                    UIManager.seleccionarOpcion(especialidad, opcion, 'particular');
+                    UIManager.seleccionarOpcion(especialidad, opcion, 'particular', precioParticular);
                     modalOverlay.remove();
                 });
                 botonesContainer.appendChild(btnParticular);
@@ -489,8 +496,9 @@ class UIManager {
     }
 
     // Seleccionar opción de especialidad
-    static async seleccionarOpcion(especialidad, opcion, tipo) {
-        const precioSeleccionado = tipo === 'club' ? opcion.clubMedical : opcion.particular;
+    static async seleccionarOpcion(especialidad, opcion, tipo, precioOverride = null) {
+        // Usar precio override si se proporciona, sino usar el precio original
+        const precioSeleccionado = precioOverride !== null ? precioOverride : (tipo === 'club' ? opcion.clubMedical : opcion.particular);
 
         UIManager.estado.selectedEspecialidad = especialidad.idEspecialidad;
         UIManager.estado.selectedPrecio = precioSeleccionado;
@@ -507,7 +515,7 @@ class UIManager {
             };
 
             const precios = {
-                particular: opcion.particular,
+                particular: precioOverride !== null && tipo === 'particular' ? precioOverride : opcion.particular,
                 clubMedical: opcion.clubMedical,
                 esClubMedical: tipo === 'club',
                 selected: precioSeleccionado

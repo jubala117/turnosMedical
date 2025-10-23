@@ -66,6 +66,80 @@ const CartManager = {
     },
 
     /**
+     * Determine category for an item
+     * @param {Object} item - Cart item
+     * @returns {Object} Category info {key, name, priority}
+     */
+    getItemCategory(item) {
+        if (item.type === 'consulta') {
+            return {
+                key: 'consultas',
+                name: 'Consultas Médicas',
+                priority: 1
+            };
+        }
+
+        // For exams, determine subcategory based on name
+        const itemName = item.name.toLowerCase();
+
+        if (itemName.includes('laboratorio') || itemName.includes('sangre') || itemName.includes('orina') || itemName.includes('heces')) {
+            return {
+                key: 'laboratorio',
+                name: 'Exámenes de Laboratorio',
+                priority: 2
+            };
+        }
+
+        if (itemName.includes('ecograf') || itemName.includes('ultrasonido')) {
+            return {
+                key: 'ecografia',
+                name: 'Exámenes de Ecografía',
+                priority: 3
+            };
+        }
+
+        if (itemName.includes('rayos x') || itemName.includes('radiograf')) {
+            return {
+                key: 'rayosx',
+                name: 'Exámenes de Rayos X',
+                priority: 4
+            };
+        }
+
+        if (itemName.includes('odonto') || itemName.includes('dental')) {
+            return {
+                key: 'odontologia',
+                name: 'Servicios Odontológicos',
+                priority: 5
+            };
+        }
+
+        // Default category for other exams
+        return {
+            key: 'otros',
+            name: 'Otros Exámenes',
+            priority: 6
+        };
+    },
+
+    /**
+     * Get icon for category
+     * @param {string} categoryKey - Category key
+     * @returns {string} Font Awesome icon class
+     */
+    getCategoryIcon(categoryKey) {
+        const icons = {
+            'consultas': 'fa-stethoscope',
+            'laboratorio': 'fa-flask',
+            'ecografia': 'fa-x-ray',
+            'rayosx': 'fa-x-ray',
+            'odontologia': 'fa-tooth',
+            'otros': 'fa-file-medical'
+        };
+        return icons[categoryKey] || 'fa-file-medical';
+    },
+
+    /**
      * Render checkout screen
      */
     renderCheckout() {
@@ -90,10 +164,39 @@ const CartManager = {
         if (checkoutItemsList) checkoutItemsList.classList.remove('hidden');
         if (checkoutEmptyMessage) checkoutEmptyMessage.classList.add('hidden');
 
-        // Render each item
-        this.items.forEach(item => {
-            const itemElement = this.createCheckoutItemElement(item);
-            checkoutContainer.appendChild(itemElement);
+        // Group items by category
+        const groupedItems = {};
+        this.items.forEach((item, index) => {
+            const category = this.getItemCategory(item);
+            if (!groupedItems[category.key]) {
+                groupedItems[category.key] = {
+                    name: category.name,
+                    priority: category.priority,
+                    items: []
+                };
+            }
+            // Keep track of original index for maintaining order within category
+            groupedItems[category.key].items.push({ item, originalIndex: index });
+        });
+
+        // Sort categories by priority (consultas first, then exams)
+        const sortedCategories = Object.entries(groupedItems).sort((a, b) => {
+            return a[1].priority - b[1].priority;
+        });
+
+        // Render each category
+        sortedCategories.forEach(([categoryKey, categoryData]) => {
+            // Create category header
+            const categoryHeader = document.createElement('div');
+            categoryHeader.className = 'text-2xl font-bold text-blue-800 mt-6 mb-4 pt-4 border-t-2 border-blue-200 first:mt-0 first:pt-0 first:border-t-0';
+            categoryHeader.innerHTML = `<i class="fas ${this.getCategoryIcon(categoryKey)}" aria-hidden="true" style="margin-right: 12px;"></i>${categoryData.name}`;
+            checkoutContainer.appendChild(categoryHeader);
+
+            // Render items in this category (maintain insertion order)
+            categoryData.items.forEach(({ item }) => {
+                const itemElement = this.createCheckoutItemElement(item);
+                checkoutContainer.appendChild(itemElement);
+            });
         });
 
         // Update total
@@ -163,7 +266,7 @@ const CartManager = {
         removeBtn.className = 'px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2';
         removeBtn.style.backgroundColor = '#dc2626';
         removeBtn.style.color = '#ffffff';
-        removeBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i> Quitar';
+        removeBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true" style="margin-right: 8px;"></i>Quitar';
         removeBtn.setAttribute('aria-label', `Eliminar ${item.name} del carrito`);
         removeBtn.onmouseenter = function() { this.style.backgroundColor = '#b91c1c'; };
         removeBtn.onmouseleave = function() { this.style.backgroundColor = '#dc2626'; };
