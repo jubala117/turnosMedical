@@ -167,8 +167,9 @@ const DeunaPayment = {
         modal.id = 'deuna-payment-modal';
 
         modal.innerHTML = `
-            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
-                <div class="mb-6">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
+                <!-- Header Section (Fixed) -->
+                <div class="p-8 pb-4 text-center flex-shrink-0">
                     <i class="fas fa-credit-card text-7xl text-blue-600 mb-4" aria-hidden="true"></i>
                     <h2 class="text-3xl font-bold text-gray-800 mb-4">Pago con deUna</h2>
                     <p class="text-xl text-gray-600 mb-2">
@@ -182,20 +183,24 @@ const DeunaPayment = {
                     </p>
                 </div>
 
-                <div class="bg-blue-50 rounded-xl p-6 mb-6 text-left">
-                    <h3 class="font-bold text-gray-800 mb-2">Detalles del pedido:</h3>
-                    <ul class="space-y-1 text-sm text-gray-600">
-                        ${orderData.items.map(item =>
-                            `<li>• ${item.name} - $${item.unit_price.toFixed(2)}</li>`
-                        ).join('')}
-                    </ul>
+                <!-- Scrollable Content Section -->
+                <div class="flex-1 overflow-y-auto px-8">
+                    <div class="bg-blue-50 rounded-xl p-6 mb-4 text-left">
+                        <h3 class="font-bold text-gray-800 mb-2">Detalles del pedido:</h3>
+                        <ul class="space-y-1 text-sm text-gray-600">
+                            ${orderData.items.map(item =>
+                                `<li>• ${item.name} - $${item.unit_price.toFixed(2)}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+
+                    <p class="text-sm text-gray-600 mb-4">
+                        <strong>NOTA:</strong> La integración con deUna será configurada con tus credenciales.
+                    </p>
                 </div>
 
-                <p class="text-sm text-gray-600 mb-6">
-                    <strong>NOTA:</strong> La integración con deUna será configurada con tus credenciales.
-                </p>
-
-                <div class="flex gap-4">
+                <!-- Footer Section (Fixed) -->
+                <div class="p-8 pt-4 flex gap-4 flex-shrink-0 border-t border-gray-200">
                     <button
                         type="button"
                         class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-xl text-lg transition-colors"

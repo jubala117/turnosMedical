@@ -99,6 +99,15 @@ const NavigationManager = {
     goBack() {
         const currentScreen = this.history[this.history.length - 1];
 
+        // Check if there's a deUna payment modal open
+        const deunaModal = document.getElementById('deuna-payment-modal');
+        if (deunaModal) {
+            // Close the modal and stay on screen-pago
+            deunaModal.remove();
+            console.log('Closed deUna payment modal');
+            return;
+        }
+
         // Special cases for navigation logic
         // From checkout (screen-pago), always go to screen-especialidad
         if (currentScreen === 'screen-pago') {
