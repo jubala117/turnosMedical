@@ -183,7 +183,7 @@ const DeunaPayment = {
                 <div class="px-6 py-2" style="flex: 1 1 auto; overflow-y: auto; min-height: 0;">
                     <div class="bg-blue-50 rounded-xl p-4 mb-3 text-left">
                         <h3 class="font-bold text-gray-800 mb-2 text-sm">Detalles del pedido:</h3>
-                        <ul class="space-y-1 text-xs text-gray-600" style="max-height: 300px; overflow-y: auto;">
+                        <ul class="space-y-1 text-xs text-gray-600">
                             ${orderData.items.map(item =>
                                 `<li>• ${item.name} - $${item.unit_price.toFixed(2)}</li>`
                             ).join('')}
