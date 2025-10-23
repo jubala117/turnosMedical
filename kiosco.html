@@ -58,7 +58,7 @@
             bottom: 0;
             left: 0;
             right: 0;
-            height: 80px;
+            height: 60px;
             background: white;
             box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
             z-index: 100;
@@ -66,6 +66,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 0 2rem;
+            transition: all 0.3s ease;
         }
 
         /* Breadcrumbs */
@@ -183,9 +184,10 @@
             width: calc(100% - 300px);
         }
 
-        /* 🔥 FIXED: Footer no se mueve, sidebar va por encima */
+        /* 🔥 FIXED: Footer se ajusta cuando sidebar está activo */
         body.sidebar-active .kiosk-footer {
-            /* Footer stays full width */
+            left: 300px;
+            width: calc(100% - 300px);
         }
 
         /* Sidebar sections */
@@ -536,9 +538,9 @@
                 Mi Carrito (<span id="cart-item-count">0</span>)
             </h2>
             <div class="sidebar-cart-items" id="sidebar-cart-items">
-                <div class="sidebar-cart-empty" id="cart-empty-message">
+                <div class="sidebar-cart-empty" id="cart-empty-message" style="color: #d1d5db;">
                     <i class="fas fa-cart-plus" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;" aria-hidden="true"></i>
-                    Selecciona servicios para agendar
+                    Selecciona algún servicio para que aparezca aquí
                 </div>
             </div>
             <div class="sidebar-cart-total" id="sidebar-cart-total">

@@ -90,6 +90,11 @@ class AppController {
 
                 Logger.success('Paciente verificado:', { id: data.idPersona, issfa: data.issfa, clubMedical: data.clubMedical });
 
+                // 🔥 NUEVO: Activar timer de inactividad después del login
+                if (typeof InactivityTimer !== 'undefined') {
+                    InactivityTimer.enable();
+                }
+
                 await AppController.cargarEspecialidades();
             } else {
                 Utils.mostrarError('Paciente no encontrado. Si eres nuevo, por favor regístrate.');

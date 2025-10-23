@@ -129,21 +129,21 @@ const CartManager = {
         if (item.doctorName) {
             const doctorP = document.createElement('p');
             doctorP.className = 'text-gray-600';
-            doctorP.innerHTML = `<i class="fas fa-user-doctor mr-2" aria-hidden="true"></i>Dr. ${item.doctorName}`;
+            doctorP.innerHTML = `<i class="fas fa-user-doctor" aria-hidden="true" style="margin-right: 8px;"></i>Dr. ${item.doctorName}`;
             detailsDiv.appendChild(doctorP);
         }
 
         if (item.date && item.time) {
             const dateP = document.createElement('p');
             dateP.className = 'text-gray-600';
-            dateP.innerHTML = `<i class="fas fa-calendar-check mr-2" aria-hidden="true"></i>${item.date} - ${item.time}`;
+            dateP.innerHTML = `<i class="fas fa-calendar-check" aria-hidden="true" style="margin-right: 8px;"></i>${item.date} - ${item.time}`;
             detailsDiv.appendChild(dateP);
         }
 
         const typeP = document.createElement('p');
         typeP.className = 'text-gray-600';
         const typeLabel = item.priceType === 'club' ? 'Club Medical' : 'Particular';
-        typeP.innerHTML = `<i class="fas fa-tag mr-2" aria-hidden="true"></i>${typeLabel}`;
+        typeP.innerHTML = `<i class="fas fa-tag" aria-hidden="true" style="margin-right: 8px;"></i>${typeLabel}`;
         detailsDiv.appendChild(typeP);
 
         infoDiv.appendChild(nameDiv);
@@ -160,9 +160,13 @@ const CartManager = {
 
         // Remove button
         const removeBtn = document.createElement('button');
-        removeBtn.className = 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2';
+        removeBtn.className = 'px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2';
+        removeBtn.style.backgroundColor = '#dc2626';
+        removeBtn.style.color = '#ffffff';
         removeBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i> Quitar';
         removeBtn.setAttribute('aria-label', `Eliminar ${item.name} del carrito`);
+        removeBtn.onmouseenter = function() { this.style.backgroundColor = '#b91c1c'; };
+        removeBtn.onmouseleave = function() { this.style.backgroundColor = '#dc2626'; };
 
         removeBtn.addEventListener('click', (e) => {
             e.stopPropagation();

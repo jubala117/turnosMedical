@@ -97,6 +97,34 @@ const NavigationManager = {
      * Go back to previous screen
      */
     goBack() {
+        const currentScreen = this.history[this.history.length - 1];
+
+        // Special cases for navigation logic
+        // From checkout (screen-pago), always go to screen-especialidad
+        if (currentScreen === 'screen-pago') {
+            this.history.pop(); // Remove screen-pago
+            this.history = ['screen-cedula', 'screen-especialidad']; // Reset to especialidad
+            this.updateUI('screen-especialidad');
+            showScreen('screen-especialidad');
+            return;
+        }
+
+        // From especialidad, do nothing (it's the main screen after login)
+        if (currentScreen === 'screen-especialidad') {
+            console.log('Already at especialidad screen, no back action');
+            return;
+        }
+
+        // From examenes/laboratorio/odontologia/rayos screens, go back to especialidad
+        if (currentScreen === 'screen-examenes') {
+            this.history.pop();
+            this.history = ['screen-cedula', 'screen-especialidad'];
+            this.updateUI('screen-especialidad');
+            showScreen('screen-especialidad');
+            return;
+        }
+
+        // For other screens (doctores, fechas, horas), normal back navigation
         if (this.history.length > 1) {
             // Remove current screen
             this.history.pop();
@@ -164,6 +192,24 @@ const NavigationManager = {
 
         // Clear patient info
         this.currentPatient = null;
+        this.clearPatientInfo();
+
+        // Clear cedula input field
+        const cedulaInput = document.getElementById('cedula-input');
+        if (cedulaInput) {
+            cedulaInput.value = '';
+        }
+
+        // Clear UIManager estado if available
+        if (typeof UIManager !== 'undefined' && UIManager.estado) {
+            UIManager.estado.currentPatientId = null;
+            UIManager.estado.currentPatientName = null;
+        }
+
+        // Disable inactivity timer (will be re-enabled on next login)
+        if (typeof InactivityTimer !== 'undefined') {
+            InactivityTimer.disable();
+        }
 
         // Update UI
         this.updateUI('screen-cedula');
@@ -173,7 +219,7 @@ const NavigationManager = {
 
         // Show toast
         if (typeof ToastNotification !== 'undefined') {
-            ToastNotification.info('Proceso cancelado. Puedes comenzar de nuevo.');
+            ToastNotification.info('Sesión cerrada. Puedes comenzar de nuevo.');
         }
     },
 

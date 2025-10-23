@@ -240,6 +240,9 @@ const InactivityTimer = {
         // Clear timers
         this.clearTimers();
 
+        // Disable timer (will be re-enabled on next login)
+        this.enabled = false;
+
         // Clear cart
         if (typeof CartManager !== 'undefined') {
             CartManager.clearCart();
@@ -256,6 +259,12 @@ const InactivityTimer = {
             NavigationManager.clearPatientInfo();
         }
 
+        // Clear cedula input
+        const cedulaInput = document.getElementById('cedula-input');
+        if (cedulaInput) {
+            cedulaInput.value = '';
+        }
+
         // Show notification
         if (typeof ToastNotification !== 'undefined') {
             ToastNotification.warning('Sesión cerrada por inactividad');
@@ -266,8 +275,8 @@ const InactivityTimer = {
             showScreen('screen-cedula');
         }
 
-        // Restart timer
-        this.startTimer();
+        // Do NOT restart timer - it will be enabled on next login
+        console.log('InactivityTimer disabled after session reset');
     },
 
     /**
@@ -290,11 +299,11 @@ const InactivityTimer = {
     }
 };
 
-// Initialize when DOM is ready (enabled by default for kiosk mode)
+// Initialize when DOM is ready (disabled by default - only enable after login)
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => InactivityTimer.init(true));
+    document.addEventListener('DOMContentLoaded', () => InactivityTimer.init(false));
 } else {
-    InactivityTimer.init(true);
+    InactivityTimer.init(false);
 }
 
 // Make globally available
