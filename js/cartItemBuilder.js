@@ -43,13 +43,15 @@ const CartItemBuilder = {
      * @param {Object} item - Exam/service object
      * @param {number} precio - Selected price
      * @param {string} tipo - Price type ('particular' or 'club')
+     * @param {string} examType - Type of exam ('laboratorio', 'ecografia', 'rayosx', 'odontologia')
      * @returns {boolean} Success status
      */
-    startExam(item, precio, tipo) {
+    startExam(item, precio, tipo, examType = null) {
         const itemName = item.descripcion_visible || item.descripcion || item.servicio;
 
         this.currentItem = {
             type: 'examen',
+            examType: examType, // New: store exam type for categorization
             examId: item.id || item.idTipoExamenLab,
             name: itemName,
             price: precio,

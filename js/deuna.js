@@ -167,44 +167,45 @@ const DeunaPayment = {
         modal.id = 'deuna-payment-modal';
 
         modal.innerHTML = `
-            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 text-center">
-                <div class="mb-6">
-                    <i class="fas fa-credit-card text-7xl text-blue-600 mb-4" aria-hidden="true"></i>
-                    <h2 class="text-3xl font-bold text-gray-800 mb-4">Pago con deUna</h2>
-                    <p class="text-xl text-gray-600 mb-2">
-                        Total a pagar:
-                    </p>
-                    <div class="text-5xl font-bold text-blue-600 mb-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full" style="max-width: 500px; max-height: 85vh; display: flex; flex-direction: column;">
+                <!-- Header Section (Fixed) -->
+                <div class="p-6 text-center" style="flex-shrink: 0;">
+                    <i class="fas fa-credit-card text-5xl text-blue-600 mb-3" aria-hidden="true"></i>
+                    <h2 class="text-2xl font-bold text-gray-800 mb-2">Pago con deUna</h2>
+                    <p class="text-lg text-gray-600 mb-1">Total a pagar:</p>
+                    <div class="text-4xl font-bold text-blue-600 mb-2">
                         $${orderData.amount.toFixed(2)}
                     </div>
-                    <p class="text-sm text-gray-500">
-                        Pedido: ${orderData.order_id}
+                    <p class="text-xs text-gray-500">Pedido: ${orderData.order_id}</p>
+                </div>
+
+                <!-- Scrollable Content Section -->
+                <div class="px-6 py-2" style="flex: 1 1 auto; overflow-y: auto; min-height: 0;">
+                    <div class="bg-blue-50 rounded-xl p-4 mb-3 text-left">
+                        <h3 class="font-bold text-gray-800 mb-2 text-sm">Detalles del pedido:</h3>
+                        <ul class="space-y-1 text-xs text-gray-600">
+                            ${orderData.items.map(item =>
+                                `<li>• ${item.name} - $${item.unit_price.toFixed(2)}</li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+
+                    <p class="text-xs text-gray-600 mb-3">
+                        <strong>NOTA:</strong> La integración con deUna será configurada con tus credenciales.
                     </p>
                 </div>
 
-                <div class="bg-blue-50 rounded-xl p-6 mb-6 text-left">
-                    <h3 class="font-bold text-gray-800 mb-2">Detalles del pedido:</h3>
-                    <ul class="space-y-1 text-sm text-gray-600">
-                        ${orderData.items.map(item =>
-                            `<li>• ${item.name} - $${item.unit_price.toFixed(2)}</li>`
-                        ).join('')}
-                    </ul>
-                </div>
-
-                <p class="text-sm text-gray-600 mb-6">
-                    <strong>NOTA:</strong> La integración con deUna será configurada con tus credenciales.
-                </p>
-
-                <div class="flex gap-4">
+                <!-- Footer Section (Fixed) -->
+                <div class="p-6 pt-4 flex gap-4 border-t border-gray-200" style="flex-shrink: 0;">
                     <button
                         type="button"
-                        class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-4 px-6 rounded-xl text-lg transition-colors"
+                        class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-xl text-base transition-colors"
                         onclick="document.getElementById('deuna-payment-modal').remove()">
                         Cancelar
                     </button>
                     <button
                         type="button"
-                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-6 rounded-xl text-lg transition-colors"
+                        class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl text-base transition-colors"
                         onclick="DeunaPayment.simulatePayment('${orderData.order_id}')">
                         <i class="fas fa-lock mr-2" aria-hidden="true"></i>
                         Simular Pago

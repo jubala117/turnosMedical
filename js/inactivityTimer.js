@@ -24,7 +24,7 @@ const InactivityTimer = {
 
     // Throttle timer to prevent too many resets
     lastResetTime: 0,
-    resetThrottle: 1000, // Only reset once per second
+    resetThrottle: 100, // Reset up to 10 times per second for better responsiveness
 
     /**
      * Initialize inactivity timer
