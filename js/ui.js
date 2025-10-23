@@ -424,19 +424,13 @@ class UIManager {
                 const btnParticular = document.createElement('button');
                 btnParticular.className = 'flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors';
 
-                // 🔥 TEMPORAL: Override para psicología infantil media hora
-                let precioParticular = opcion.particular;
-                if (opcion.nombre && opcion.nombre.toLowerCase().includes('media hora')) {
-                    precioParticular = 15.00; // Temporal hasta encontrar el ID correcto
-                }
-
-                const precioParticularTexto = precioParticular === 0 ? 'Gratis' : `$${precioParticular.toFixed(2)}`;
+                const precioParticularTexto = opcion.particular === 0 ? 'Gratis' : `$${opcion.particular.toFixed(2)}`;
                 btnParticular.innerHTML = `
                     <div class="text-xs text-gray-600 mb-1">Precio Particular</div>
                     <div class="text-lg font-bold">${precioParticularTexto}</div>
                 `;
                 btnParticular.addEventListener('click', () => {
-                    UIManager.seleccionarOpcion(especialidad, opcion, 'particular', precioParticular);
+                    UIManager.seleccionarOpcion(especialidad, opcion, 'particular', opcion.particular);
                     modalOverlay.remove();
                 });
                 botonesContainer.appendChild(btnParticular);
