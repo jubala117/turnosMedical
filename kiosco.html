@@ -27,63 +27,422 @@
         }
         .screen {
             display: none; /* Todas las pantallas ocultas por defecto */
-            min-height: 100vh;
+            min-height: calc(100vh - 160px); /* Resta altura de header (80px) + footer (80px) */
+            padding-top: 100px; /* Offset para header fijo */
+            padding-bottom: 100px; /* Offset para footer fijo */
             animation: fadeIn 0.5s;
         }
         .screen.active {
             display: flex; /* La pantalla activa se muestra */
         }
+
+        /* Fixed Header */
+        .kiosk-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+        }
+
+        /* Fixed Footer */
+        .kiosk-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 2rem;
+            transition: all 0.3s ease;
+        }
+
+        /* Breadcrumbs */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .breadcrumb-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-item.active {
+            color: #00529B;
+            font-weight: 600;
+        }
+
+        .breadcrumb-separator {
+            color: #d1d5db;
+        }
+
+        /* Touch-optimized buttons in footer */
+        .footer-btn {
+            min-width: 200px;
+            min-height: 60px;
+            font-size: 1.125rem;
+            font-weight: bold;
+            border-radius: 0.75rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .footer-btn-back {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        .footer-btn-back:hover:not(:disabled) {
+            background-color: #4b5563;
+            transform: translateY(-2px);
+        }
+
+        .footer-btn-clear {
+            background-color: #dc2626;
+            color: white;
+        }
+
+        .footer-btn-clear:hover:not(:disabled) {
+            background-color: #b91c1c;
+            transform: translateY(-2px);
+        }
+
+        .footer-btn-continue {
+            background-color: #00529B;
+            color: white;
+        }
+
+        .footer-btn-continue:hover:not(:disabled) {
+            background-color: #003d73;
+            transform: translateY(-2px);
+        }
+
+        .footer-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .header-cancel-btn {
+            background-color: #dc2626;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .header-cancel-btn:hover {
+            background-color: #b91c1c;
+            transform: scale(1.05);
+        }
+
+        /* Sidebar Layout */
+        .kiosk-sidebar {
+            position: fixed;
+            left: 0;
+            top: 80px; /* Below header */
+            bottom: 0; /* 🔥 FIXED: Llega hasta el final */
+            width: 300px;
+            background: white;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 90;
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .kiosk-sidebar.active {
+            display: flex;
+        }
+
+        /* Adjust main content when sidebar is active */
+        body.sidebar-active .screen {
+            margin-left: 300px;
+            width: calc(100% - 300px);
+        }
+
+        /* 🔥 FIXED: Footer se ajusta cuando sidebar está activo */
+        body.sidebar-active .kiosk-footer {
+            left: 300px;
+            width: calc(100% - 300px);
+        }
+
+        /* Sidebar sections */
+        .sidebar-section {
+            padding: 1.5rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.75rem;
+        }
+
+        /* Sidebar specialty items */
+        .sidebar-specialty {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-specialty:hover {
+            background-color: #f3f4f6;
+        }
+
+        .sidebar-specialty.active {
+            background-color: #dbeafe;
+            border-left: 4px solid #00529B;
+        }
+
+        .sidebar-specialty-icon {
+            font-size: 1.25rem;
+            color: #00529B;
+            width: 28px;
+            text-align: center;
+        }
+
+        .sidebar-specialty-name {
+            font-size: 0.875rem;
+            color: #374151;
+            font-weight: 500;
+            flex: 1;
+        }
+
+        /* Shopping cart in sidebar */
+        .sidebar-cart {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .sidebar-cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .sidebar-cart-item {
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        .sidebar-cart-item-name {
+            font-weight: 600;
+            color: #111827;
+            margin-bottom: 0.25rem;
+        }
+
+        .sidebar-cart-item-details {
+            color: #6b7280;
+            font-size: 0.7rem;
+        }
+
+        .sidebar-cart-item-price {
+            color: #00529B;
+            font-weight: 700;
+            margin-top: 0.25rem;
+        }
+
+        .sidebar-cart-total {
+            background: #00529B;
+            color: white;
+            padding: 1rem;
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .sidebar-cart-empty {
+            text-align: center;
+            color: #9ca3af;
+            padding: 2rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        /* 🔥 TOUCH OPTIMIZED: Inputs and interactive elements */
+        input[type="text"],
+        input[type="search"],
+        input[type="number"] {
+            font-size: 1.5rem !important;
+            min-height: 70px !important;
+            padding: 1.25rem !important;
+            touch-action: manipulation;
+        }
+
+        /* Touch-friendly spacing */
+        .touch-spacing-y > * + * {
+            margin-top: 1.5rem !important;
+        }
+
+        .touch-spacing-x > * + * {
+            margin-left: 1.5rem !important;
+        }
+
+        /* Larger touch targets for price buttons in specialty cards */
+        .precio-btn,
+        .ver-opciones-btn {
+            min-height: 60px !important;
+            font-size: 1.125rem !important;
+            padding: 1rem 1.5rem !important;
+            touch-action: manipulation;
+        }
+
+        /* Doctor and date cards - larger touch targets */
+        #doctors-grid .card-primary,
+        #dates-grid .card-primary {
+            min-height: 150px;
+            padding: 2rem !important;
+        }
+
+        #doctors-grid .card-primary i,
+        #dates-grid .card-primary i {
+            font-size: 4rem !important;
+        }
+
+        #doctors-grid .card-primary h3,
+        #dates-grid .card-primary h3 {
+            font-size: 1.5rem !important;
+        }
+
+        /* Hour buttons - optimized for touch */
+        #hours-grid button {
+            min-height: 80px !important;
+            min-width: 120px !important;
+            font-size: 1.5rem !important;
+        }
+
+        /* Specialty grid - better spacing for touch */
+        #specialties-grid {
+            gap: 2rem !important;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
         /* Estilos para los botones y tarjetas, para que coincidan con tu marca */
+        /* 🔥 TOUCH OPTIMIZED: Botones y tarjetas con tamaños mínimos para pantallas táctiles */
         .card-primary {
             background-color: white;
             border-radius: 1.5rem;
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
-            transition: transform 0.3s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             cursor: pointer;
+            min-height: 100px; /* Touch-friendly minimum height */
         }
         .card-primary:hover {
             transform: translateY(-5px);
             box-shadow: 0 15px 30px rgba(0, 82, 155, 0.15);
         }
+        .card-primary:active {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 82, 155, 0.2);
+        }
+
+        /* Primary buttons - 80px minimum height for kiosks */
         .btn-primary {
             background-color: #00529B;
             color: white;
             font-weight: bold;
-            padding: 1rem 2.5rem;
-            border-radius: 0.75rem;
-            transition: background-color 0.3s ease;
-            font-size: 1.25rem;
+            padding: 1.5rem 3rem;
+            border-radius: 1rem;
+            transition: all 0.2s ease;
+            font-size: 1.5rem;
+            min-height: 80px;
+            min-width: 200px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-primary:hover {
             background-color: #003d73;
+            transform: scale(1.02);
         }
+        .btn-primary:active {
+            transform: scale(0.98);
+        }
+
+        /* Secondary buttons */
         .btn-secondary {
-            background-color: #dc2626; /* Rojo */
+            background-color: #dc2626;
             color: white;
             font-weight: bold;
-            padding: 0.75rem 2rem;
-            border-radius: 0.75rem;
-            transition: background-color 0.3s ease;
-            font-size: 1rem;
+            padding: 1.25rem 2.5rem;
+            border-radius: 1rem;
+            transition: all 0.2s ease;
+            font-size: 1.25rem;
+            min-height: 70px;
+            min-width: 180px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-secondary:hover {
             background-color: #b91c1c;
+            transform: scale(1.02);
         }
+        .btn-secondary:active {
+            transform: scale(0.98);
+        }
+
+        /* Gray buttons */
         .btn-gray {
-            background-color: #6b7280; /* Gris */
+            background-color: #6b7280;
             color: white;
             font-weight: bold;
-            padding: 0.75rem 2rem;
-            border-radius: 0.75rem;
-            transition: background-color 0.3s ease;
-            font-size: 1rem;
+            padding: 1.25rem 2.5rem;
+            border-radius: 1rem;
+            transition: all 0.2s ease;
+            font-size: 1.25rem;
+            min-height: 70px;
+            min-width: 180px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-gray:hover {
             background-color: #4b5563;
+            transform: scale(1.02);
+        }
+        .btn-gray:active {
+            transform: scale(0.98);
         }
         .hidden {
             display: none !important;
@@ -130,6 +489,71 @@
         Saltar al contenido principal
     </a>
 
+    <!-- Fixed Header -->
+    <header class="kiosk-header">
+        <div class="flex items-center gap-4">
+            <img src="images/logo.png" alt="Medical&Care" class="h-12" loading="eager">
+            <div class="flex flex-col">
+                <span id="header-patient-name" class="text-lg font-semibold text-gray-800"></span>
+                <span id="header-patient-cedula" class="text-sm text-gray-500"></span>
+            </div>
+        </div>
+
+        <nav aria-label="Progreso de agendamiento">
+            <ol class="breadcrumb" id="breadcrumb-nav">
+                <li class="breadcrumb-item active">
+                    <i class="fas fa-id-card" aria-hidden="true"></i>
+                    <span>Identificación</span>
+                </li>
+            </ol>
+        </nav>
+
+        <button type="button" id="header-cancel-all" class="header-cancel-btn hidden" aria-label="Cerrar sesión y volver al inicio">
+            <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+            Cerrar Sesión
+        </button>
+    </header>
+
+    <!-- Fixed Footer -->
+    <footer class="kiosk-footer">
+        <div class="flex items-center justify-center gap-6 w-full">
+            <button type="button" id="footer-back-btn" class="footer-btn footer-btn-back hidden" aria-label="Regresar a la pantalla anterior">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                Regresar
+            </button>
+
+            <button type="button" id="footer-clear-cart-btn" class="footer-btn footer-btn-clear hidden" aria-label="Limpiar carrito de compras">
+                <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                Limpiar Carrito
+            </button>
+        </div>
+    </footer>
+
+    <!-- Sidebar Menu -->
+    <aside class="kiosk-sidebar" id="kiosk-sidebar" aria-label="Carrito de compras">
+        <!-- Shopping Cart Section (Sección de Servicios removida como solicitado) -->
+        <div class="sidebar-section sidebar-cart">
+            <h2 class="sidebar-section-title">
+                <i class="fas fa-shopping-cart" aria-hidden="true"></i>
+                Mi Carrito (<span id="cart-item-count">0</span>)
+            </h2>
+            <div class="sidebar-cart-items" id="sidebar-cart-items">
+                <div class="sidebar-cart-empty" id="cart-empty-message" style="color: #d1d5db;">
+                    <i class="fas fa-cart-plus" style="font-size: 2rem; margin-bottom: 0.5rem; display: block;" aria-hidden="true"></i>
+                    Agrega Servicios para verlos aquí
+                </div>
+            </div>
+            <div class="sidebar-cart-total" id="sidebar-cart-total">
+                <span>Total:</span>
+                <span id="cart-total-amount">$0.00</span>
+            </div>
+            <button type="button" id="checkout-btn" class="w-full font-bold py-4 text-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed" style="background-color: #10b981; color: #ffffff;" disabled>
+                <i class="fas fa-check-circle" aria-hidden="true" style="margin-right: 8px;"></i>
+                Finalizar Pedido
+            </button>
+        </div>
+    </aside>
+
     <!-- Pantalla de Cédula -->
     <div id="screen-cedula" class="screen active flex-col items-center justify-center p-8" role="main" aria-labelledby="titulo-cedula">
         <img src="images/logo.png" alt="Logotipo de Medical&Care" class="logo" width="150" height="auto" loading="eager">
@@ -164,9 +588,6 @@
         <div id="specialties-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12" role="list" aria-label="Lista de especialidades médicas" aria-live="polite">
             <!-- Las especialidades se cargarán aquí dinámicamente -->
         </div>
-        <div class="flex space-x-4">
-            <button type="button" class="btn-secondary" onclick="showScreen('screen-cedula')" aria-label="Cancelar agendamiento">Cancelar</button>
-        </div>
     </div>
 
     <!-- Pantalla de Doctores -->
@@ -175,10 +596,6 @@
         <p class="text-xl text-gray-600 mb-12">Estos son los doctores disponibles para la especialidad seleccionada.</p>
         <div id="doctors-grid" class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <!-- Los doctores se cargarán aquí dinámicamente -->
-        </div>
-        <div class="flex space-x-4">
-            <button class="btn-gray" onclick="showScreen('screen-especialidad')">Regresar</button>
-            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
         </div>
     </div>
 
@@ -189,10 +606,6 @@
         <div id="dates-grid" class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <!-- Las fechas se cargarán aquí dinámicamente -->
         </div>
-        <div class="flex space-x-4">
-            <button class="btn-gray" onclick="showScreen('screen-doctores')">Regresar</button>
-            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
-        </div>
     </div>
 
     <!-- Pantalla de Horas -->
@@ -201,10 +614,6 @@
         <p class="text-xl text-gray-600 mb-12">Horas disponibles para el día seleccionado.</p>
         <div id="hours-grid" class="grid grid-cols-3 md:grid-cols-6 gap-4 mb-12">
             <!-- Las horas se cargarán aquí dinámicamente -->
-        </div>
-        <div class="flex space-x-4">
-            <button class="btn-gray" onclick="showScreen('screen-fechas')">Regresar</button>
-            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
         </div>
     </div>
 
@@ -241,15 +650,57 @@
         <div id="examenes-grid" class="w-full max-w-5xl space-y-3 mb-12">
             <!-- Los exámenes se cargarán aquí dinámicamente -->
         </div>
-        <div class="flex space-x-4">
-            <button class="btn-gray" onclick="showScreen('screen-especialidad')">Regresar</button>
-            <button class="btn-secondary" onclick="showScreen('screen-cedula')">Cancelar</button>
-        </div>
     </div>
 
-    <!-- Pantalla de Pago -->
-    <div id="screen-pago" class="screen flex-col items-center justify-center p-8">
-        <h1 class="text-4xl font-bold">Confirmación y Pago</h1>
+    <!-- Pantalla de Checkout/Resumen -->
+    <div id="screen-pago" class="screen flex-col items-center p-8" style="justify-content: flex-start; padding-top: 120px;">
+        <div class="w-full max-w-4xl">
+            <h1 class="text-4xl font-bold text-gray-800 mb-3 text-center">Resumen de tu Pedido</h1>
+            <p class="text-xl text-gray-600 mb-8 text-center">Revisa los servicios seleccionados antes de proceder al pago</p>
+
+            <!-- Lista de servicios en el checkout -->
+            <div id="checkout-items-list" class="bg-white rounded-2xl shadow-xl p-8 mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-clipboard-list text-blue-600" aria-hidden="true" style="margin-right: 12px;"></i>
+                    Servicios Seleccionados
+                </h2>
+                <div id="checkout-items-container" class="space-y-4">
+                    <!-- Items will be rendered here -->
+                </div>
+
+                <!-- Total -->
+                <div class="border-t-2 border-gray-200 mt-6 pt-6">
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-bold text-gray-800">TOTAL:</span>
+                        <span class="text-3xl font-bold text-blue-600" id="checkout-total">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex gap-6 justify-center">
+                <button type="button" id="add-more-services-btn" class="btn-gray" onclick="showScreen('screen-especialidad')">
+                    <i class="fas fa-plus-circle" aria-hidden="true" style="margin-right: 8px;"></i>
+                    Agregar Más Servicios
+                </button>
+
+                <button type="button" id="proceed-to-payment-btn" class="btn-primary" style="background-color: #10b981; min-width: 300px;">
+                    <i class="fas fa-lock" aria-hidden="true" style="margin-right: 8px;"></i>
+                    Proceder al Pago
+                </button>
+            </div>
+
+            <!-- Mensaje si el carrito está vacío -->
+            <div id="checkout-empty-message" class="hidden bg-yellow-50 border-2 border-yellow-200 rounded-xl p-8 text-center">
+                <i class="fas fa-shopping-cart text-6xl text-yellow-500 mb-4" aria-hidden="true"></i>
+                <h3 class="text-2xl font-bold text-gray-800 mb-3">Tu carrito está vacío</h3>
+                <p class="text-lg text-gray-600 mb-6">Agrega servicios a tu carrito para continuar</p>
+                <button type="button" class="btn-primary" onclick="showScreen('screen-especialidad')">
+                    <i class="fas fa-stethoscope mr-2" aria-hidden="true"></i>
+                    Ver Servicios Disponibles
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal para Club Medical -->
@@ -283,6 +734,11 @@
     <script src="js/eventManager.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/api.js"></script>
+    <script src="js/cart.js"></script>
+    <script src="js/cartItemBuilder.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/inactivityTimer.js"></script>
+    <script src="js/deuna.js"></script>
     <script src="js/search.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>
