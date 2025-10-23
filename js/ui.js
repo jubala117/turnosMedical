@@ -181,7 +181,7 @@ class UIManager {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 const tipo = btn.dataset.tipo;
-                const precio = btn.dataset.precio;
+                const precio = parseFloat(btn.dataset.precio);
                 const especialidadId = btn.dataset.especialidad;
 
                 if (tipo === 'club') {
@@ -191,9 +191,23 @@ class UIManager {
                     }
                 }
 
+                // 🔥 NUEVO: Iniciar construcción de item del carrito
+                if (typeof CartItemBuilder !== 'undefined') {
+                    const precios = {
+                        particular: especialidad.precios.particular,
+                        clubMedical: especialidad.precios.clubMedical,
+                        esClubMedical: tipo === 'club',
+                        selected: precio
+                    };
+
+                    CartItemBuilder.startConsulta(especialidad, precios);
+                }
+
+                // Mantener estado para compatibilidad
                 UIManager.estado.selectedEspecialidad = especialidadId;
                 UIManager.estado.selectedPrecio = precio;
                 UIManager.estado.selectedTipoPrecio = tipo;
+
                 await AppController.cargarDoctores(especialidadId);
             });
         });
@@ -232,13 +246,21 @@ class UIManager {
     static crearCardDoctor(doctor) {
         const card = Utils.crearElemento('div', 'card-primary p-8 text-center');
         card.dataset.id = doctor.idMedico;
-        
+
         card.innerHTML = `
             <i class="fas fa-user-md text-5xl text-blue-800 mb-4"></i>
             <h3 class="text-xl font-bold">${doctor.nombreCompleto}</h3>
         `;
-        
+
         card.addEventListener('click', async () => {
+            // 🔥 NUEVO: Agregar doctor al item del carrito
+            if (typeof CartItemBuilder !== 'undefined' && CartItemBuilder.isBuildingItem()) {
+                CartItemBuilder.setDoctor({
+                    idMedico: doctor.idMedico,
+                    nombre: doctor.nombreCompleto
+                });
+            }
+
             await AppController.cargarFechas(doctor.idMedico);
         });
 
@@ -264,13 +286,18 @@ class UIManager {
     static crearCardFecha(fecha) {
         const card = Utils.crearElemento('div', 'card-primary p-6 text-center');
         card.dataset.date = fecha.fechaHorario;
-        
+
         card.innerHTML = `
             <i class="fas fa-calendar-alt text-5xl text-blue-800 mb-4"></i>
             <h3 class="text-lg font-bold">${Utils.fechaLetras(fecha.fechaHorario)}</h3>
         `;
-        
+
         card.addEventListener('click', async () => {
+            // 🔥 NUEVO: Agregar fecha al item del carrito
+            if (typeof CartItemBuilder !== 'undefined' && CartItemBuilder.isBuildingItem()) {
+                CartItemBuilder.setDate(fecha.fechaHorario);
+            }
+
             await AppController.cargarHoras(UIManager.estado.selectedMedicoId, fecha.fechaHorario);
         });
 
@@ -297,10 +324,38 @@ class UIManager {
         const button = Utils.crearElemento('button', 'btn-primary');
         button.dataset.id = hora.idHorarioMedico;
         button.textContent = hora.hora;
-        
+
         button.addEventListener('click', () => {
-            console.log(`Cita seleccionada: Médico ${UIManager.estado.selectedMedicoId}, Fecha ${fecha}, Hora ${hora.hora}`);
-            Utils.mostrarPantalla('screen-pago');
+            // 🔥 NUEVO: Agregar hora y completar item del carrito
+            if (typeof CartItemBuilder !== 'undefined' && CartItemBuilder.isBuildingItem()) {
+                // Agregar hora al item
+                CartItemBuilder.setTime(hora.hora, hora.idHorarioMedico);
+
+                // Intentar agregar al carrito
+                const success = CartItemBuilder.addToCart();
+
+                if (success) {
+                    // Limpiar historial para evitar regresar a pasos anteriores
+                    if (typeof NavigationManager !== 'undefined') {
+                        NavigationManager.resetHistory();
+                    }
+
+                    // Volver a especialidades para continuar agregando servicios
+                    Utils.mostrarPantalla('screen-especialidad');
+
+                    // Mostrar mensaje de éxito
+                    if (typeof ToastNotification !== 'undefined') {
+                        ToastNotification.success('✓ Servicio agregado al carrito. Puedes agregar más servicios o finalizar pedido.');
+                    }
+                } else {
+                    // Si falla, mostrar error
+                    console.error('Error adding item to cart');
+                }
+            } else {
+                // Flujo antiguo (compatibilidad)
+                console.log(`Cita seleccionada: Médico ${UIManager.estado.selectedMedicoId}, Hora ${hora.hora}`);
+                Utils.mostrarPantalla('screen-pago');
+            }
         });
 
         return button;
@@ -368,13 +423,20 @@ class UIManager {
             if (opcion.particular !== null) {
                 const btnParticular = document.createElement('button');
                 btnParticular.className = 'flex-1 py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg text-sm font-medium transition-colors';
-                const precioParticularTexto = opcion.particular === 0 ? 'Gratis' : `$${opcion.particular.toFixed(2)}`;
+
+                // 🔥 TEMPORAL: Override para psicología infantil media hora
+                let precioParticular = opcion.particular;
+                if (opcion.nombre && opcion.nombre.toLowerCase().includes('media hora')) {
+                    precioParticular = 15.00; // Temporal hasta encontrar el ID correcto
+                }
+
+                const precioParticularTexto = precioParticular === 0 ? 'Gratis' : `$${precioParticular.toFixed(2)}`;
                 btnParticular.innerHTML = `
                     <div class="text-xs text-gray-600 mb-1">Precio Particular</div>
                     <div class="text-lg font-bold">${precioParticularTexto}</div>
                 `;
                 btnParticular.addEventListener('click', () => {
-                    UIManager.seleccionarOpcion(especialidad, opcion, 'particular');
+                    UIManager.seleccionarOpcion(especialidad, opcion, 'particular', precioParticular);
                     modalOverlay.remove();
                 });
                 botonesContainer.appendChild(btnParticular);
@@ -434,14 +496,35 @@ class UIManager {
     }
 
     // Seleccionar opción de especialidad
-    static async seleccionarOpcion(especialidad, opcion, tipo) {
+    static async seleccionarOpcion(especialidad, opcion, tipo, precioOverride = null) {
+        // Usar precio override si se proporciona, sino usar el precio original
+        const precioSeleccionado = precioOverride !== null ? precioOverride : (tipo === 'club' ? opcion.clubMedical : opcion.particular);
+
         UIManager.estado.selectedEspecialidad = especialidad.idEspecialidad;
-        UIManager.estado.selectedPrecio = tipo === 'club' ? opcion.clubMedical : opcion.particular;
+        UIManager.estado.selectedPrecio = precioSeleccionado;
         UIManager.estado.selectedTipoPrecio = tipo;
         UIManager.estado.selectedOpcionNombre = opcion.nombre;
         UIManager.estado.selectedIdTipoServicio = tipo === 'club' ? opcion.idTipoServicioClub : opcion.idTipoServicioRegular;
 
-        ToastNotification.success(`Seleccionado: ${opcion.nombre} - $${UIManager.estado.selectedPrecio.toFixed(2)}`);
+        // 🔥 NUEVO: Iniciar construcción de item del carrito con nombre de opción
+        if (typeof CartItemBuilder !== 'undefined') {
+            // Crear objeto de especialidad con el nombre de la opción
+            const especialidadConOpcion = {
+                ...especialidad,
+                descEspecialidad: `${especialidad.descEspecialidad} - ${opcion.nombre}`
+            };
+
+            const precios = {
+                particular: precioOverride !== null && tipo === 'particular' ? precioOverride : opcion.particular,
+                clubMedical: opcion.clubMedical,
+                esClubMedical: tipo === 'club',
+                selected: precioSeleccionado
+            };
+
+            CartItemBuilder.startConsulta(especialidadConOpcion, precios);
+        }
+
+        ToastNotification.success(`Seleccionado: ${opcion.nombre} - $${precioSeleccionado.toFixed(2)}`);
 
         await AppController.cargarDoctores(especialidad.idEspecialidad);
     }

@@ -5,13 +5,18 @@ class AppController {
     static async inicializar() {
         // Inicializar referencias DOM
         UIManager.inicializarReferencias();
-        
+
         // Configurar eventos
         AppController.configurarEventos();
-        
+
+        // Inicializar módulo de pagos
+        if (typeof DeunaPayment !== 'undefined') {
+            DeunaPayment.init();
+        }
+
         // Mostrar pantalla inicial
         Utils.mostrarPantalla('screen-cedula');
-        
+
         console.log('Aplicación inicializada correctamente');
     }
 
@@ -19,13 +24,19 @@ class AppController {
     static configurarEventos() {
         // Evento para verificar cédula
         UIManager.elementos.verificarBtn.addEventListener('click', AppController.verificarCedula);
-        
+
         // Evento Enter en input de cédula
         UIManager.elementos.cedulaInput.addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
                 AppController.verificarCedula();
             }
         });
+
+        // Evento para proceder al pago
+        const proceedToPaymentBtn = document.getElementById('proceed-to-payment-btn');
+        if (proceedToPaymentBtn) {
+            proceedToPaymentBtn.addEventListener('click', AppController.procesarPago);
+        }
 
         // Eventos de navegación globales
         AppController.configurarEventosNavegacion();
@@ -69,7 +80,20 @@ class AppController {
                 UIManager.estado.currentPatientName = data.nombre;
                 UIManager.elementos.patientNameSpan.textContent = data.nombre;
 
+                // 🔥 NUEVO: Actualizar información del paciente en el header
+                if (typeof NavigationManager !== 'undefined') {
+                    NavigationManager.setPatientInfo({
+                        nombre: data.nombre,
+                        cedula: UIManager.elementos.cedulaInput.value
+                    });
+                }
+
                 Logger.success('Paciente verificado:', { id: data.idPersona, issfa: data.issfa, clubMedical: data.clubMedical });
+
+                // 🔥 NUEVO: Activar timer de inactividad después del login
+                if (typeof InactivityTimer !== 'undefined') {
+                    InactivityTimer.enable();
+                }
 
                 await AppController.cargarEspecialidades();
             } else {
@@ -85,6 +109,13 @@ class AppController {
         try {
             const especialidades = await ApiService.obtenerEspecialidades(UIManager.estado.currentPatientId);
             UIManager.renderizarEspecialidades(especialidades);
+
+            // 🔥 NUEVO: Mostrar sidebar y cargar categorías
+            if (typeof NavigationManager !== 'undefined') {
+                NavigationManager.showSidebar();
+                NavigationManager.loadSidebarSpecialties(especialidades);
+            }
+
             Utils.mostrarPantalla('screen-especialidad');
         } catch (error) {
             Utils.mostrarError(error.message);
@@ -476,9 +507,26 @@ class AppController {
             UIManager.mostrarModalClubMedical();
             return;
         }
-        
+
         console.log(`Examen seleccionado: ${descripcion}, Precio: ${precio}, Tipo: ${tipo}`);
-        Utils.mostrarExito(`Has seleccionado: ${descripcion}\nPrecio: $${precio.toFixed(2)}`);
+
+        // 🔥 NUEVO: Agregar examen al carrito
+        if (typeof CartItemBuilder !== 'undefined') {
+            const examItem = {
+                id: descripcion, // Use descripcion as ID for now
+                descripcion: descripcion
+            };
+
+            CartItemBuilder.startExam(examItem, precio, tipo);
+            const success = CartItemBuilder.addToCart();
+
+            if (success) {
+                ToastNotification.success(`✓ ${descripcion} agregado al carrito`);
+            }
+        } else {
+            // Flujo antiguo
+            Utils.mostrarExito(`Has seleccionado: ${descripcion}\nPrecio: $${precio.toFixed(2)}`);
+        }
     }
 
     // Seleccionar servicio odontológico
@@ -492,9 +540,74 @@ class AppController {
             UIManager.mostrarModalClubMedical();
             return;
         }
-        
+
         console.log(`Servicio odontológico seleccionado: ${servicio}, Precio: ${precio}, Tipo: ${tipo}`);
-        Utils.mostrarExito(`Has seleccionado: ${servicio}\nPrecio: $${precio.toFixed(2)}`);
+
+        // 🔥 NUEVO: Agregar servicio al carrito
+        if (typeof CartItemBuilder !== 'undefined') {
+            const serviceItem = {
+                id: servicio,
+                descripcion: servicio
+            };
+
+            CartItemBuilder.startExam(serviceItem, precio, tipo);
+            const success = CartItemBuilder.addToCart();
+
+            if (success) {
+                ToastNotification.success(`✓ ${servicio} agregado al carrito`);
+            }
+        } else {
+            // Flujo antiguo
+            Utils.mostrarExito(`Has seleccionado: ${servicio}\nPrecio: $${precio.toFixed(2)}`);
+        }
+    }
+
+    // Procesar pago
+    static async procesarPago() {
+        console.log('🔒 Procesando pago...');
+
+        // Validar que hay items en el carrito
+        if (typeof CartManager === 'undefined' || CartManager.isEmpty()) {
+            ToastNotification.warning('El carrito está vacío');
+            return;
+        }
+
+        // Validar datos del paciente
+        if (!UIManager.estado.currentPatientId || !NavigationManager.currentPatient) {
+            ToastNotification.error('Error: Información del paciente no disponible');
+            return;
+        }
+
+        try {
+            // Preparar datos del cliente
+            const customerData = {
+                idPersona: UIManager.estado.currentPatientId,
+                nombre: NavigationManager.currentPatient.nombre || UIManager.estado.currentPatientName,
+                cedula: NavigationManager.currentPatient.cedula || '',
+                email: '',
+                telefono: ''
+            };
+
+            // Preparar datos del carrito
+            const cartData = {
+                items: CartManager.items,
+                total: CartManager.getTotal(),
+                itemCount: CartManager.getItemCount()
+            };
+
+            console.log('💳 Datos del pago:', { customerData, cartData });
+
+            // Procesar pago con deUna
+            if (typeof DeunaPayment !== 'undefined') {
+                await DeunaPayment.processPayment(cartData, customerData);
+            } else {
+                console.error('❌ DeunaPayment no está disponible');
+                ToastNotification.error('Error: Sistema de pagos no disponible');
+            }
+        } catch (error) {
+            console.error('❌ Error procesando pago:', error);
+            ToastNotification.error('Error al procesar el pago');
+        }
     }
 }
 
