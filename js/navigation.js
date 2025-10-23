@@ -326,8 +326,6 @@ const NavigationManager = {
     updateFooterButtons(screenId) {
         const backBtn = document.getElementById('footer-back-btn');
         const clearCartBtn = document.getElementById('footer-clear-cart-btn');
-        const addMoreBtn = document.getElementById('footer-add-more-btn');
-        const proceedPaymentBtn = document.getElementById('footer-proceed-payment-btn');
 
         if (!backBtn) return;
 
@@ -348,17 +346,6 @@ const NavigationManager = {
                 clearCartBtn.classList.remove('hidden');
             } else {
                 clearCartBtn.classList.add('hidden');
-            }
-        }
-
-        // Checkout buttons: show only on screen-pago (checkout screen)
-        if (addMoreBtn && proceedPaymentBtn) {
-            if (screenId === 'screen-pago') {
-                addMoreBtn.classList.remove('hidden');
-                proceedPaymentBtn.classList.remove('hidden');
-            } else {
-                addMoreBtn.classList.add('hidden');
-                proceedPaymentBtn.classList.add('hidden');
             }
         }
     },

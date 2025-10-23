@@ -526,17 +526,6 @@
                 <i class="fas fa-trash-alt" aria-hidden="true"></i>
                 Limpiar Carrito
             </button>
-
-            <!-- Botones de checkout (solo en screen-pago) -->
-            <button type="button" id="footer-add-more-btn" class="btn-gray hidden" onclick="showScreen('screen-especialidad')" aria-label="Agregar más servicios al carrito">
-                <i class="fas fa-plus-circle" aria-hidden="true" style="margin-right: 8px;"></i>
-                Agregar Más Servicios
-            </button>
-
-            <button type="button" id="footer-proceed-payment-btn" class="btn-primary hidden" onclick="AppController.procesarPago()" aria-label="Proceder al pago">
-                <i class="fas fa-credit-card" aria-hidden="true" style="margin-right: 8px;"></i>
-                Proceder al Pago
-            </button>
         </div>
     </footer>
 
@@ -688,8 +677,8 @@
                 </div>
             </div>
 
-            <!-- Botones de acción movidos al footer para mejor visibilidad -->
-            <div class="hidden flex gap-6 justify-center">
+            <!-- Botones de acción -->
+            <div class="flex gap-6 justify-center">
                 <button type="button" id="add-more-services-btn" class="btn-gray" onclick="showScreen('screen-especialidad')">
                     <i class="fas fa-plus-circle" aria-hidden="true" style="margin-right: 8px;"></i>
                     Agregar Más Servicios
