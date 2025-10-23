@@ -335,6 +335,11 @@ class UIManager {
                 const success = CartItemBuilder.addToCart();
 
                 if (success) {
+                    // Limpiar historial para evitar regresar a pasos anteriores
+                    if (typeof NavigationManager !== 'undefined') {
+                        NavigationManager.resetHistory();
+                    }
+
                     // Volver a especialidades para continuar agregando servicios
                     Utils.mostrarPantalla('screen-especialidad');
 

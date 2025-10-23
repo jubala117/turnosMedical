@@ -5,13 +5,18 @@ class AppController {
     static async inicializar() {
         // Inicializar referencias DOM
         UIManager.inicializarReferencias();
-        
+
         // Configurar eventos
         AppController.configurarEventos();
-        
+
+        // Inicializar módulo de pagos
+        if (typeof DeunaPayment !== 'undefined') {
+            DeunaPayment.init();
+        }
+
         // Mostrar pantalla inicial
         Utils.mostrarPantalla('screen-cedula');
-        
+
         console.log('Aplicación inicializada correctamente');
     }
 
@@ -19,13 +24,19 @@ class AppController {
     static configurarEventos() {
         // Evento para verificar cédula
         UIManager.elementos.verificarBtn.addEventListener('click', AppController.verificarCedula);
-        
+
         // Evento Enter en input de cédula
         UIManager.elementos.cedulaInput.addEventListener('keypress', function(event) {
             if (event.key === 'Enter') {
                 AppController.verificarCedula();
             }
         });
+
+        // Evento para proceder al pago
+        const proceedToPaymentBtn = document.getElementById('proceed-to-payment-btn');
+        if (proceedToPaymentBtn) {
+            proceedToPaymentBtn.addEventListener('click', AppController.procesarPago);
+        }
 
         // Eventos de navegación globales
         AppController.configurarEventosNavegacion();
@@ -543,6 +554,54 @@ class AppController {
         } else {
             // Flujo antiguo
             Utils.mostrarExito(`Has seleccionado: ${servicio}\nPrecio: $${precio.toFixed(2)}`);
+        }
+    }
+
+    // Procesar pago
+    static async procesarPago() {
+        console.log('🔒 Procesando pago...');
+
+        // Validar que hay items en el carrito
+        if (typeof CartManager === 'undefined' || CartManager.isEmpty()) {
+            ToastNotification.warning('El carrito está vacío');
+            return;
+        }
+
+        // Validar datos del paciente
+        if (!UIManager.estado.currentPatientId || !NavigationManager.currentPatient) {
+            ToastNotification.error('Error: Información del paciente no disponible');
+            return;
+        }
+
+        try {
+            // Preparar datos del cliente
+            const customerData = {
+                idPersona: UIManager.estado.currentPatientId,
+                nombre: NavigationManager.currentPatient.nombre || UIManager.estado.currentPatientName,
+                cedula: NavigationManager.currentPatient.cedula || '',
+                email: '',
+                telefono: ''
+            };
+
+            // Preparar datos del carrito
+            const cartData = {
+                items: CartManager.items,
+                total: CartManager.getTotal(),
+                itemCount: CartManager.getItemCount()
+            };
+
+            console.log('💳 Datos del pago:', { customerData, cartData });
+
+            // Procesar pago con deUna
+            if (typeof DeunaPayment !== 'undefined') {
+                await DeunaPayment.processPayment(cartData, customerData);
+            } else {
+                console.error('❌ DeunaPayment no está disponible');
+                ToastNotification.error('Error: Sistema de pagos no disponible');
+            }
+        } catch (error) {
+            console.error('❌ Error procesando pago:', error);
+            ToastNotification.error('Error al procesar el pago');
         }
     }
 }
