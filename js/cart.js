@@ -36,6 +36,14 @@ const CartManager = {
      * Proceed to checkout
      */
     proceedToCheckout() {
+        // Check if cart is empty
+        if (this.isEmpty()) {
+            if (typeof ToastNotification !== 'undefined') {
+                ToastNotification.warning('Agrega servicios al carrito para continuar');
+            }
+            return;
+        }
+
         // Validate cart
         const validation = this.validateForCheckout();
 
@@ -48,17 +56,129 @@ const CartManager = {
             return;
         }
 
-        // Show confirmation
-        console.log('Proceeding to checkout:', this.exportForCheckout());
-
-        if (typeof ToastNotification !== 'undefined') {
-            ToastNotification.success('Procesando agendamiento...');
-        }
-
-        // Navigate to payment screen
+        // Navigate to checkout screen
         if (typeof showScreen === 'function') {
             showScreen('screen-pago');
+
+            // Render checkout items
+            this.renderCheckout();
         }
+    },
+
+    /**
+     * Render checkout screen
+     */
+    renderCheckout() {
+        const checkoutContainer = document.getElementById('checkout-items-container');
+        const checkoutTotal = document.getElementById('checkout-total');
+        const checkoutItemsList = document.getElementById('checkout-items-list');
+        const checkoutEmptyMessage = document.getElementById('checkout-empty-message');
+
+        if (!checkoutContainer) return;
+
+        // Clear container
+        checkoutContainer.innerHTML = '';
+
+        // Check if empty
+        if (this.isEmpty()) {
+            if (checkoutItemsList) checkoutItemsList.classList.add('hidden');
+            if (checkoutEmptyMessage) checkoutEmptyMessage.classList.remove('hidden');
+            return;
+        }
+
+        // Show items list
+        if (checkoutItemsList) checkoutItemsList.classList.remove('hidden');
+        if (checkoutEmptyMessage) checkoutEmptyMessage.classList.add('hidden');
+
+        // Render each item
+        this.items.forEach(item => {
+            const itemElement = this.createCheckoutItemElement(item);
+            checkoutContainer.appendChild(itemElement);
+        });
+
+        // Update total
+        if (checkoutTotal) {
+            const total = this.getTotal();
+            checkoutTotal.textContent = `$${total.toFixed(2)}`;
+        }
+    },
+
+    /**
+     * Create checkout item DOM element
+     * @param {Object} item - Cart item
+     * @returns {HTMLElement} Checkout item element
+     */
+    createCheckoutItemElement(item) {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'bg-gray-50 rounded-xl p-6 flex items-start justify-between hover:bg-gray-100 transition-colors';
+        itemDiv.setAttribute('data-item-id', item.id);
+
+        // Left side - item info
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'flex-1';
+
+        // Service name
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'text-xl font-bold text-gray-800 mb-2';
+        nameDiv.textContent = item.name;
+
+        // Service details
+        const detailsDiv = document.createElement('div');
+        detailsDiv.className = 'space-y-1';
+
+        if (item.doctorName) {
+            const doctorP = document.createElement('p');
+            doctorP.className = 'text-gray-600';
+            doctorP.innerHTML = `<i class="fas fa-user-doctor mr-2" aria-hidden="true"></i>Dr. ${item.doctorName}`;
+            detailsDiv.appendChild(doctorP);
+        }
+
+        if (item.date && item.time) {
+            const dateP = document.createElement('p');
+            dateP.className = 'text-gray-600';
+            dateP.innerHTML = `<i class="fas fa-calendar-check mr-2" aria-hidden="true"></i>${item.date} - ${item.time}`;
+            detailsDiv.appendChild(dateP);
+        }
+
+        const typeP = document.createElement('p');
+        typeP.className = 'text-gray-600';
+        const typeLabel = item.priceType === 'club' ? 'Club Medical' : 'Particular';
+        typeP.innerHTML = `<i class="fas fa-tag mr-2" aria-hidden="true"></i>${typeLabel}`;
+        detailsDiv.appendChild(typeP);
+
+        infoDiv.appendChild(nameDiv);
+        infoDiv.appendChild(detailsDiv);
+
+        // Right side - price and remove button
+        const actionDiv = document.createElement('div');
+        actionDiv.className = 'flex flex-col items-end gap-3';
+
+        // Price
+        const priceDiv = document.createElement('div');
+        priceDiv.className = 'text-2xl font-bold text-blue-600';
+        priceDiv.textContent = `$${parseFloat(item.price).toFixed(2)}`;
+
+        // Remove button
+        const removeBtn = document.createElement('button');
+        removeBtn.className = 'bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-semibold transition-colors flex items-center gap-2';
+        removeBtn.innerHTML = '<i class="fas fa-trash" aria-hidden="true"></i> Quitar';
+        removeBtn.setAttribute('aria-label', `Eliminar ${item.name} del carrito`);
+
+        removeBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.removeItem(item.id);
+            // Re-render checkout
+            this.renderCheckout();
+        });
+
+        actionDiv.appendChild(priceDiv);
+        actionDiv.appendChild(removeBtn);
+
+        // Assemble item
+        itemDiv.appendChild(infoDiv);
+        itemDiv.appendChild(actionDiv);
+
+        return itemDiv;
     },
 
     /**

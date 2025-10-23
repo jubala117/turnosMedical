@@ -119,6 +119,16 @@
             transform: translateY(-2px);
         }
 
+        .footer-btn-clear {
+            background-color: #dc2626;
+            color: white;
+        }
+
+        .footer-btn-clear:hover:not(:disabled) {
+            background-color: #b91c1c;
+            transform: translateY(-2px);
+        }
+
         .footer-btn-continue {
             background-color: #00529B;
             color: white;
@@ -496,22 +506,25 @@
             </ol>
         </nav>
 
-        <button type="button" id="header-cancel-all" class="header-cancel-btn hidden" aria-label="Cancelar todo y volver al inicio">
-            <i class="fas fa-times" aria-hidden="true"></i>
-            Cancelar Todo
+        <button type="button" id="header-cancel-all" class="header-cancel-btn hidden" aria-label="Cerrar sesión y volver al inicio">
+            <i class="fas fa-sign-out-alt" aria-hidden="true"></i>
+            Cerrar Sesión
         </button>
     </header>
 
     <!-- Fixed Footer -->
     <footer class="kiosk-footer">
-        <button type="button" id="footer-back-btn" class="footer-btn footer-btn-back hidden" aria-label="Regresar a la pantalla anterior">
-            <i class="fas fa-arrow-left" aria-hidden="true"></i>
-            Regresar
-        </button>
+        <div class="flex items-center justify-center gap-6 w-full">
+            <button type="button" id="footer-back-btn" class="footer-btn footer-btn-back hidden" aria-label="Regresar a la pantalla anterior">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                Regresar
+            </button>
 
-        <div class="flex-1"></div>
-
-        <!-- Botón "Continuar" removido - el flujo ahora usa el carrito y "Finalizar Pedido" -->
+            <button type="button" id="footer-clear-cart-btn" class="footer-btn footer-btn-clear hidden" aria-label="Limpiar carrito de compras">
+                <i class="fas fa-trash-alt" aria-hidden="true"></i>
+                Limpiar Carrito
+            </button>
+        </div>
     </footer>
 
     <!-- Sidebar Menu -->
@@ -637,9 +650,55 @@
         </div>
     </div>
 
-    <!-- Pantalla de Pago -->
-    <div id="screen-pago" class="screen flex-col items-center justify-center p-8">
-        <h1 class="text-4xl font-bold">Confirmación y Pago</h1>
+    <!-- Pantalla de Checkout/Resumen -->
+    <div id="screen-pago" class="screen flex-col items-center p-8" style="justify-content: flex-start; padding-top: 120px;">
+        <div class="w-full max-w-4xl">
+            <h1 class="text-4xl font-bold text-gray-800 mb-3 text-center">Resumen de tu Pedido</h1>
+            <p class="text-xl text-gray-600 mb-8 text-center">Revisa los servicios seleccionados antes de proceder al pago</p>
+
+            <!-- Lista de servicios en el checkout -->
+            <div id="checkout-items-list" class="bg-white rounded-2xl shadow-xl p-8 mb-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                    <i class="fas fa-clipboard-list text-blue-600 mr-3" aria-hidden="true"></i>
+                    Servicios Seleccionados
+                </h2>
+                <div id="checkout-items-container" class="space-y-4">
+                    <!-- Items will be rendered here -->
+                </div>
+
+                <!-- Total -->
+                <div class="border-t-2 border-gray-200 mt-6 pt-6">
+                    <div class="flex justify-between items-center">
+                        <span class="text-2xl font-bold text-gray-800">TOTAL:</span>
+                        <span class="text-3xl font-bold text-blue-600" id="checkout-total">$0.00</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botones de acción -->
+            <div class="flex gap-6 justify-center">
+                <button type="button" id="add-more-services-btn" class="btn-gray" onclick="showScreen('screen-especialidad')">
+                    <i class="fas fa-plus-circle mr-2" aria-hidden="true"></i>
+                    Agregar Más Servicios
+                </button>
+
+                <button type="button" id="proceed-to-payment-btn" class="btn-primary" style="background-color: #10b981; min-width: 300px;">
+                    <i class="fas fa-lock mr-2" aria-hidden="true"></i>
+                    Proceder al Pago
+                </button>
+            </div>
+
+            <!-- Mensaje si el carrito está vacío -->
+            <div id="checkout-empty-message" class="hidden bg-yellow-50 border-2 border-yellow-200 rounded-xl p-8 text-center">
+                <i class="fas fa-shopping-cart text-6xl text-yellow-500 mb-4" aria-hidden="true"></i>
+                <h3 class="text-2xl font-bold text-gray-800 mb-3">Tu carrito está vacío</h3>
+                <p class="text-lg text-gray-600 mb-6">Agrega servicios a tu carrito para continuar</p>
+                <button type="button" class="btn-primary" onclick="showScreen('screen-especialidad')">
+                    <i class="fas fa-stethoscope mr-2" aria-hidden="true"></i>
+                    Ver Servicios Disponibles
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Modal para Club Medical -->
@@ -677,6 +736,7 @@
     <script src="js/cartItemBuilder.js"></script>
     <script src="js/navigation.js"></script>
     <script src="js/inactivityTimer.js"></script>
+    <script src="js/deuna.js"></script>
     <script src="js/search.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/app.js"></script>

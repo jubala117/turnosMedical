@@ -62,6 +62,12 @@ const NavigationManager = {
             addManagedListener(backBtn, 'click', () => this.goBack());
         }
 
+        // Footer clear cart button
+        const clearCartBtn = document.getElementById('footer-clear-cart-btn');
+        if (clearCartBtn) {
+            addManagedListener(clearCartBtn, 'click', () => this.clearCart());
+        }
+
         // Header cancel all button
         const cancelBtn = document.getElementById('header-cancel-all');
         if (cancelBtn) {
@@ -107,7 +113,28 @@ const NavigationManager = {
     },
 
     /**
-     * Cancel all and return to start
+     * Clear shopping cart with confirmation
+     */
+    clearCart() {
+        if (typeof CartManager === 'undefined' || CartManager.isEmpty()) {
+            return;
+        }
+
+        const confirmed = confirm(
+            '¿Estás seguro de que deseas limpiar el carrito?\n\n' +
+            `Se eliminarán ${CartManager.getItemCount()} servicio(s).`
+        );
+
+        if (confirmed) {
+            CartManager.clearCart();
+            if (typeof ToastNotification !== 'undefined') {
+                ToastNotification.info('Carrito limpiado correctamente');
+            }
+        }
+    },
+
+    /**
+     * Cancel all and return to start (Cerrar Sesión)
      */
     cancelAll() {
         // 🔥 NUEVO: Confirmación para acción crítica
@@ -243,6 +270,7 @@ const NavigationManager = {
      */
     updateFooterButtons(screenId) {
         const backBtn = document.getElementById('footer-back-btn');
+        const clearCartBtn = document.getElementById('footer-clear-cart-btn');
 
         if (!backBtn) return;
 
@@ -253,7 +281,18 @@ const NavigationManager = {
             backBtn.classList.remove('hidden');
         }
 
-        // Continue button removed - using cart flow now
+        // Clear cart button: show only on specialty/exam screens when cart has items
+        if (clearCartBtn) {
+            const showClearCart = (screenId === 'screen-especialidad' || screenId === 'screen-examenes') &&
+                                  typeof CartManager !== 'undefined' &&
+                                  !CartManager.isEmpty();
+
+            if (showClearCart) {
+                clearCartBtn.classList.remove('hidden');
+            } else {
+                clearCartBtn.classList.add('hidden');
+            }
+        }
     },
 
     /**
@@ -308,6 +347,15 @@ const NavigationManager = {
     },
 
     // Continue button methods removed - using cart flow now
+
+    /**
+     * Reset navigation history to current patient (after adding to cart)
+     */
+    resetHistory() {
+        // Keep only cedula and especialidad in history
+        this.history = ['screen-cedula', 'screen-especialidad'];
+        console.log('Navigation history reset to:', this.history);
+    },
 
     /**
      * Reset navigation state
