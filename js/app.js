@@ -517,7 +517,10 @@ class AppController {
                 descripcion: descripcion
             };
 
-            CartItemBuilder.startExam(examItem, precio, tipo);
+            // Get the current area to categorize the exam properly
+            const examType = UIManager.estado.areaActual || null;
+
+            CartItemBuilder.startExam(examItem, precio, tipo, examType);
             const success = CartItemBuilder.addToCart();
 
             if (success) {
@@ -550,7 +553,8 @@ class AppController {
                 descripcion: servicio
             };
 
-            CartItemBuilder.startExam(serviceItem, precio, tipo);
+            // Odontología always has examType 'odontologia'
+            CartItemBuilder.startExam(serviceItem, precio, tipo, 'odontologia');
             const success = CartItemBuilder.addToCart();
 
             if (success) {
