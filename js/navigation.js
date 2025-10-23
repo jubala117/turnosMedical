@@ -239,8 +239,8 @@ const NavigationManager = {
      * @param {string} screenId - Current screen ID
      */
     updateSidebarVisibility(screenId) {
-        // Show sidebar on all screens except first (cedula)
-        if (screenId === 'screen-cedula') {
+        // Hide sidebar on cedula screen and checkout screen (screen-pago)
+        if (screenId === 'screen-cedula' || screenId === 'screen-pago') {
             this.hideSidebar();
         } else if (this.currentPatient !== null) {
             // Only show sidebar if patient is verified
