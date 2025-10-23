@@ -3,7 +3,7 @@
  * Gestión visual de especialidades sin necesidad de tocar código
  */
 
-const API_BASE = '../admin/api';
+const API_BASE = 'api';
 
 // Estado global
 const state = {
