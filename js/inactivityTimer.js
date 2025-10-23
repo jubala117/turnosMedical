@@ -22,6 +22,10 @@ const InactivityTimer = {
     // Is timer enabled?
     enabled: false,
 
+    // Throttle timer to prevent too many resets
+    lastResetTime: 0,
+    resetThrottle: 1000, // Only reset once per second
+
     /**
      * Initialize inactivity timer
      * @param {boolean} enable - Whether to enable the timer (default: true)
@@ -46,7 +50,12 @@ const InactivityTimer = {
         const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
 
         const resetHandler = () => {
-            this.resetTimer();
+            // Throttle reset calls to prevent excessive timer restarts
+            const now = Date.now();
+            if (now - this.lastResetTime >= this.resetThrottle) {
+                this.lastResetTime = now;
+                this.resetTimer();
+            }
         };
 
         events.forEach(event => {
