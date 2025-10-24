@@ -20,6 +20,22 @@ from multi_agent_system.core.orchestrator import Orchestrator
 from multi_agent_system.agents.code_agent import CodeAgent
 from multi_agent_system.agents.research_agent import ResearchAgent
 
+# ========================================
+# CONFIGURACIÓN DE MODELOS
+# ========================================
+# Cambia aquí para usar diferentes modelos
+
+# OPCIÓN 1: GPT-4 (ACTIVA) - Ahorra tokens de Claude
+ORCHESTRATOR_MODEL = "gpt-4o"
+RESEARCH_MODEL = "gpt-4o"
+
+# OPCIÓN 2: Claude (COMENTADA) - Descomenta cuando tengas más tokens
+# ORCHESTRATOR_MODEL = "claude-sonnet-4-5-20250929"
+# RESEARCH_MODEL = "claude-sonnet-4-5-20250929"
+
+# Code Agent - DeepSeek es más barato y bueno para código
+CODE_MODEL = "deepseek-chat"  # O usa "gpt-4o" si no tienes DeepSeek
+
 
 def example_1_simple_orchestrator():
     """Ejemplo 1: Uso simple del orquestador sin agentes especializados"""
@@ -28,7 +44,7 @@ def example_1_simple_orchestrator():
     print("="*60 + "\n")
 
     # Crear orquestador
-    orchestrator = Orchestrator(model="claude-sonnet-4-5-20250929")
+    orchestrator = Orchestrator(model=ORCHESTRATOR_MODEL)
 
     # Hacer una pregunta simple
     response = orchestrator.chat("Lista los archivos en el directorio actual")
@@ -42,10 +58,10 @@ def example_2_with_code_agent():
     print("="*60 + "\n")
 
     # Crear orquestador
-    orchestrator = Orchestrator(model="claude-sonnet-4-5-20250929")
+    orchestrator = Orchestrator(model=ORCHESTRATOR_MODEL)
 
     # Crear y registrar Code Agent
-    code_agent = CodeAgent(model="deepseek-chat")
+    code_agent = CodeAgent(model=CODE_MODEL)
     orchestrator.register_agent("code", code_agent)
 
     # El orquestador decidirá si delegar al code agent
@@ -63,10 +79,10 @@ def example_3_with_research_agent():
     print("="*60 + "\n")
 
     # Crear orquestador
-    orchestrator = Orchestrator(model="claude-sonnet-4-5-20250929")
+    orchestrator = Orchestrator(model=ORCHESTRATOR_MODEL)
 
     # Crear y registrar Research Agent
-    research_agent = ResearchAgent(model="claude-sonnet-4-5-20250929")
+    research_agent = ResearchAgent(model=RESEARCH_MODEL)
     orchestrator.register_agent("research", research_agent)
 
     # Pedir análisis del proyecto
@@ -82,12 +98,12 @@ def example_4_complete_system():
     print("EJEMPLO 4: Sistema Completo Multi-Agente")
     print("="*60 + "\n")
 
-    # Crear orquestador (modelo principal - Claude Sonnet)
-    orchestrator = Orchestrator(model="claude-sonnet-4-5-20250929")
+    # Crear orquestador (modelo principal)
+    orchestrator = Orchestrator(model=ORCHESTRATOR_MODEL)
 
     # Registrar agentes especializados con diferentes modelos
-    orchestrator.register_agent("code", CodeAgent(model="deepseek-chat"))
-    orchestrator.register_agent("research", ResearchAgent(model="claude-sonnet-4-5-20250929"))
+    orchestrator.register_agent("code", CodeAgent(model=CODE_MODEL))
+    orchestrator.register_agent("research", ResearchAgent(model=RESEARCH_MODEL))
 
     # Mostrar estado del sistema
     orchestrator.show_status()
@@ -107,8 +123,8 @@ def example_5_conversation():
     print("EJEMPLO 5: Conversación Multi-Turno")
     print("="*60 + "\n")
 
-    orchestrator = Orchestrator(model="claude-sonnet-4-5-20250929")
-    orchestrator.register_agent("code", CodeAgent(model="deepseek-chat"))
+    orchestrator = Orchestrator(model=ORCHESTRATOR_MODEL)
+    orchestrator.register_agent("code", CodeAgent(model=CODE_MODEL))
 
     # Conversación
     messages = [
@@ -147,15 +163,19 @@ def example_7_multi_model():
     print("EJEMPLO 7: Multi-Modelo")
     print("="*60 + "\n")
 
-    # Orquestador con Claude (mejor para coordinación)
-    orchestrator = Orchestrator(model="claude-sonnet-4-5-20250929")
+    # Orquestador (coordinación principal)
+    # OPCIÓN 1: GPT-4 (ACTIVA)
+    orchestrator = Orchestrator(model="gpt-4o")
 
-    # Code Agent con DeepSeek (especializado en código)
+    # OPCIÓN 2: Claude (COMENTADA)
+    # orchestrator = Orchestrator(model="claude-sonnet-4-5-20250929")
+
+    # Code Agent con DeepSeek (especializado en código, más barato)
     code_agent = CodeAgent(model="deepseek-coder")
     orchestrator.register_agent("code", code_agent)
 
-    # Research Agent con GPT-4o (bueno para análisis)
-    research_agent = ResearchAgent(model="gpt-4o")
+    # Research Agent - mismo modelo que orquestador
+    research_agent = ResearchAgent(model="gpt-4o")  # O "claude-sonnet-4-5-20250929"
     orchestrator.register_agent("research", research_agent)
 
     orchestrator.show_status()

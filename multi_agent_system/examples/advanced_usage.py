@@ -128,7 +128,10 @@ def example_parallel_agents():
 
     # Crear múltiples agentes
     code_agent = CodeAgent(model="deepseek-chat")
-    research_agent = ResearchAgent(model="claude-sonnet-4-5-20250929")
+    # OPCIÓN 1: GPT-4 (ACTIVA)
+    research_agent = ResearchAgent(model="gpt-4o")
+    # OPCIÓN 2: Claude (COMENTADA)
+    # research_agent = ResearchAgent(model="claude-sonnet-4-5-20250929")
 
     # Tarea para cada agente
     print("🔄 Ejecutando tareas en paralelo (simulado)...\n")
@@ -230,10 +233,12 @@ def example_model_comparison():
     # Misma tarea con diferentes modelos
     task = "Explica qué es un agente de IA en 2 oraciones"
 
+    # Lista de modelos a comparar
+    # Comenta/descomenta según tus API keys disponibles
     models = [
-        "claude-sonnet-4-5-20250929",
-        "gpt-4o",
-        "deepseek-chat"
+        "gpt-4o",              # OpenAI (ACTIVO)
+        "deepseek-chat",       # DeepSeek (ACTIVO)
+        # "claude-sonnet-4-5-20250929",  # Anthropic (COMENTADO - descomenta si tienes tokens)
     ]
 
     print(f"📝 Tarea: {task}\n")
