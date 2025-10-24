@@ -80,25 +80,25 @@ def interactive_mode():
     # CONFIGURACIÓN DE MODELOS
     # ========================================
 
-    # OPCIÓN 1: GPT-4 (ACTIVA) - Usa OpenAI
-    # Descomenta esta sección si quieres usar GPT-4
-    if Settings.OPENAI_API_KEY:
-        orchestrator_model = "gpt-4o"  # Orquestador con GPT-4
-        code_model = "deepseek-chat" if Settings.DEEPSEEK_API_KEY else "gpt-4o"
-        research_model = "gpt-4o"
-        print("✅ Usando GPT-4 como modelo principal")
+    # OPCIÓN 1: Claude (ACTIVA) - Usa Anthropic
+    # Claude funciona mejor con el sistema de herramientas
+    if Settings.ANTHROPIC_API_KEY:
+        orchestrator_model = "claude-sonnet-4-5-20250929"  # Orquestador con Claude
+        code_model = "deepseek-chat" if Settings.DEEPSEEK_API_KEY else "claude-sonnet-4-5-20250929"
+        research_model = "claude-sonnet-4-5-20250929"
+        print(">> Usando Claude como modelo principal")
 
-    # OPCIÓN 2: Claude (COMENTADA) - Usa Anthropic
-    # Descomenta estas líneas cuando tengas más tokens de Claude
-    # elif Settings.ANTHROPIC_API_KEY:
-    #     orchestrator_model = "claude-sonnet-4-5-20250929"  # Orquestador con Claude
-    #     code_model = "deepseek-chat" if Settings.DEEPSEEK_API_KEY else "claude-sonnet-4-5-20250929"
-    #     research_model = "claude-sonnet-4-5-20250929"
-    #     print("✅ Usando Claude como modelo principal")
+    # OPCIÓN 2: GPT-4 (COMENTADA) - Usa OpenAI
+    # Descomenta estas líneas si prefieres usar GPT-4
+    # elif Settings.OPENAI_API_KEY:
+    #     orchestrator_model = "gpt-4o"  # Orquestador con GPT-4
+    #     code_model = "deepseek-chat" if Settings.DEEPSEEK_API_KEY else "gpt-4o"
+    #     research_model = "gpt-4o"
+    #     print(">> Usando GPT-4 como modelo principal")
 
     else:
-        print("❌ Error: Necesitas al menos una API key configurada")
-        print("   Configure OPENAI_API_KEY en el archivo .env")
+        print("ERROR: Necesitas al menos una API key configurada")
+        print("   Configure ANTHROPIC_API_KEY o OPENAI_API_KEY en el archivo .env")
         return
 
     orchestrator = Orchestrator(model=orchestrator_model)
@@ -174,19 +174,19 @@ def demo_mode():
     # CONFIGURACIÓN DE MODELOS PARA DEMO
     # ========================================
 
-    # OPCIÓN 1: GPT-4 (ACTIVA)
-    if Settings.OPENAI_API_KEY:
-        model = "gpt-4o"
-        print("✅ Demo usando GPT-4")
+    # OPCIÓN 1: Claude (ACTIVA)
+    if Settings.ANTHROPIC_API_KEY:
+        model = "claude-sonnet-4-5-20250929"
+        print(">> Demo usando Claude")
 
-    # OPCIÓN 2: Claude (COMENTADA)
-    # Descomenta cuando tengas más tokens de Claude
-    # elif Settings.ANTHROPIC_API_KEY:
-    #     model = "claude-sonnet-4-5-20250929"
-    #     print("✅ Demo usando Claude")
+    # OPCIÓN 2: GPT-4 (COMENTADA)
+    # Descomenta si prefieres usar GPT-4
+    # elif Settings.OPENAI_API_KEY:
+    #     model = "gpt-4o"
+    #     print(">> Demo usando GPT-4")
 
     else:
-        print("❌ Error: Necesitas al menos una API key configurada")
+        print("ERROR: Necesitas al menos una API key configurada")
         return
 
     orchestrator = Orchestrator(model=model)
