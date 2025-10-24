@@ -69,29 +69,46 @@ def interactive_mode():
     # Crear orquestador con agentes
     print("🔧 Inicializando sistema...\n")
 
-    # Determinar qué modelo usar basado en las API keys disponibles
-    if Settings.ANTHROPIC_API_KEY:
-        orchestrator_model = "claude-sonnet-4-5-20250929"
-        code_model = "deepseek-chat" if Settings.DEEPSEEK_API_KEY else "claude-sonnet-4-5-20250929"
-    elif Settings.OPENAI_API_KEY:
-        orchestrator_model = "gpt-4o"
+    # ========================================
+    # CONFIGURACIÓN DE MODELOS
+    # ========================================
+
+    # OPCIÓN 1: GPT-4 (ACTIVA) - Usa OpenAI
+    # Descomenta esta sección si quieres usar GPT-4
+    if Settings.OPENAI_API_KEY:
+        orchestrator_model = "gpt-4o"  # Orquestador con GPT-4
         code_model = "deepseek-chat" if Settings.DEEPSEEK_API_KEY else "gpt-4o"
+        research_model = "gpt-4o"
+        print("✅ Usando GPT-4 como modelo principal")
+
+    # OPCIÓN 2: Claude (COMENTADA) - Usa Anthropic
+    # Descomenta estas líneas cuando tengas más tokens de Claude
+    # elif Settings.ANTHROPIC_API_KEY:
+    #     orchestrator_model = "claude-sonnet-4-5-20250929"  # Orquestador con Claude
+    #     code_model = "deepseek-chat" if Settings.DEEPSEEK_API_KEY else "claude-sonnet-4-5-20250929"
+    #     research_model = "claude-sonnet-4-5-20250929"
+    #     print("✅ Usando Claude como modelo principal")
+
     else:
         print("❌ Error: Necesitas al menos una API key configurada")
+        print("   Configure OPENAI_API_KEY en el archivo .env")
         return
 
     orchestrator = Orchestrator(model=orchestrator_model)
+    print(f"   Orquestador: {orchestrator_model}")
 
     # Registrar agentes especializados
     try:
         code_agent = CodeAgent(model=code_model)
         orchestrator.register_agent("code", code_agent)
+        print(f"   Code Agent: {code_model}")
     except Exception as e:
         print(f"⚠️ Code Agent no disponible: {e}")
 
     try:
-        research_agent = ResearchAgent(model=orchestrator_model)
+        research_agent = ResearchAgent(model=research_model)
         orchestrator.register_agent("research", research_agent)
+        print(f"   Research Agent: {research_model}")
     except Exception as e:
         print(f"⚠️ Research Agent no disponible: {e}")
 
@@ -146,11 +163,21 @@ def demo_mode():
     print("🎬 MODO DEMO - Ejemplos Predefinidos")
     print("="*60 + "\n")
 
-    # Determinar modelo
-    if Settings.ANTHROPIC_API_KEY:
-        model = "claude-sonnet-4-5-20250929"
-    elif Settings.OPENAI_API_KEY:
+    # ========================================
+    # CONFIGURACIÓN DE MODELOS PARA DEMO
+    # ========================================
+
+    # OPCIÓN 1: GPT-4 (ACTIVA)
+    if Settings.OPENAI_API_KEY:
         model = "gpt-4o"
+        print("✅ Demo usando GPT-4")
+
+    # OPCIÓN 2: Claude (COMENTADA)
+    # Descomenta cuando tengas más tokens de Claude
+    # elif Settings.ANTHROPIC_API_KEY:
+    #     model = "claude-sonnet-4-5-20250929"
+    #     print("✅ Demo usando Claude")
+
     else:
         print("❌ Error: Necesitas al menos una API key configurada")
         return
