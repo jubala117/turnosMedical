@@ -643,8 +643,24 @@ async function handleImageUpload(event) {
 
         console.log('📥 Respuesta HTTP:', response.status, response.statusText);
 
-        const data = await response.json();
-        console.log('📥 Datos de respuesta:', data);
+        // Primero obtener el texto de la respuesta
+        const responseText = await response.text();
+        console.log('📥 Respuesta RAW del servidor:', responseText.substring(0, 500));
+
+        // Intentar parsear como JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+            console.log('📥 Datos de respuesta (JSON):', data);
+        } catch (e) {
+            console.error('❌ ERROR: El servidor devolvió HTML en lugar de JSON');
+            console.error('HTML completo:', responseText);
+            showToast('Error del servidor. Revisa la consola (F12)', 'error');
+            document.getElementById('upload-button-container').classList.remove('hidden');
+            document.getElementById('upload-loading').classList.add('hidden');
+            event.target.value = '';
+            return;
+        }
 
         if (data.success) {
             // Guardar path en campo oculto
@@ -659,7 +675,7 @@ async function handleImageUpload(event) {
             document.getElementById('upload-button-container').classList.remove('hidden');
         }
     } catch (error) {
-        console.error('Error uploading image:', error);
+        console.error('❌ Error uploading image:', error);
         showToast('Error al subir imagen', 'error');
         document.getElementById('upload-button-container').classList.remove('hidden');
     } finally {
