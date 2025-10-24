@@ -518,19 +518,40 @@ async function toggleActive(id, newStatus) {
     try {
         const esp = state.especialidades.find(e => e.id === id);
 
+        // Construir objeto con TODOS los datos para no perder información
+        const updateData = {
+            id: id,
+            nombre_especialidad: esp.nombre_especialidad,
+            activo: newStatus ? 1 : 0,
+            orden: esp.orden || 0,
+            tiene_opciones: esp.tiene_opciones ? 1 : 0,
+            tipo_seccion: esp.tipo_seccion || 'consulta',
+            mostrar_en_kiosco: 1,
+            imagen_personalizada: esp.imagen_personalizada || null
+        };
+
+        // Agregar configuración de precios si existe
+        if (!esp.tiene_opciones) {
+            updateData.tipo_precio = esp.tipo_precio || 'id_bd';
+
+            if (esp.tipo_precio === 'id_bd') {
+                updateData.id_servicio_particular = esp.id_servicio_particular || null;
+                updateData.id_servicio_club = esp.id_servicio_club || null;
+                updateData.tabla_origen = esp.tabla_origen || 'servicio';
+            } else {
+                updateData.precio_particular_fijo = esp.precio_particular_fijo || null;
+                updateData.precio_club_fijo = esp.precio_club_fijo || null;
+            }
+        }
+
+        console.log('📤 Actualizando estado (preservando datos):', updateData);
+
         const response = await fetch(`${API_BASE}/especialidades_config.php`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                id: id,
-                activo: newStatus ? 1 : 0,
-                orden: esp.orden,
-                tiene_opciones: esp.tiene_opciones ? 1 : 0,
-                tipo_seccion: esp.tipo_seccion,
-                mostrar_en_kiosco: 1
-            })
+            body: JSON.stringify(updateData)
         });
 
         const data = await response.json();
