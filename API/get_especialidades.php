@@ -333,11 +333,15 @@ try {
         }
     }
 
-    // 5. Obtener todas las especialidades
-    $sql = "SELECT idEspecialidad, descEspecialidad
-            FROM especialidad
-            WHERE idDispensario = ? AND idEstado = 1
-            ORDER BY descEspecialidad";
+    // 5. Obtener todas las especialidades ACTIVAS según configuración del dashboard
+    $sql = "SELECT e.idEspecialidad, e.descEspecialidad
+            FROM especialidad e
+            INNER JOIN kiosk_especialidad_config k ON e.idEspecialidad = k.id_especialidad
+            WHERE e.idDispensario = ?
+              AND e.idEstado = 1
+              AND k.activo = 1
+              AND k.mostrar_en_kiosco = 1
+            ORDER BY COALESCE(k.orden, 999), e.descEspecialidad";
 
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(1, $idDispensario, PDO::PARAM_INT);
