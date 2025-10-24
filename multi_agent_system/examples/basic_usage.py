@@ -25,16 +25,16 @@ from multi_agent_system.agents.research_agent import ResearchAgent
 # ========================================
 # Cambia aquí para usar diferentes modelos
 
-# OPCIÓN 1: GPT-4 (ACTIVA) - Ahorra tokens de Claude
-ORCHESTRATOR_MODEL = "gpt-4o"
-RESEARCH_MODEL = "gpt-4o"
+# OPCIÓN 1: Claude (ACTIVA) - Mejor compatibilidad
+ORCHESTRATOR_MODEL = "claude-sonnet-4-5-20250929"
+RESEARCH_MODEL = "claude-sonnet-4-5-20250929"
 
-# OPCIÓN 2: Claude (COMENTADA) - Descomenta cuando tengas más tokens
-# ORCHESTRATOR_MODEL = "claude-sonnet-4-5-20250929"
-# RESEARCH_MODEL = "claude-sonnet-4-5-20250929"
+# OPCIÓN 2: GPT-4 (COMENTADA) - Descomenta si prefieres GPT-4
+# ORCHESTRATOR_MODEL = "gpt-4o"
+# RESEARCH_MODEL = "gpt-4o"
 
 # Code Agent - DeepSeek es más barato y bueno para código
-CODE_MODEL = "deepseek-chat"  # O usa "gpt-4o" si no tienes DeepSeek
+CODE_MODEL = "deepseek-chat"  # O usa "claude-sonnet-4-5-20250929" o "gpt-4o"
 
 
 def example_1_simple_orchestrator():
