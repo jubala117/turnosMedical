@@ -293,6 +293,28 @@ try {
     $serviceIds = array_unique(array_filter($serviceIds));
     $examenIds = array_unique(array_filter($examenIds));
 
+    // 3.5. AGREGAR IDs de especialidades configuradas en el dashboard
+    $sqlDashboardPrices = "SELECT id_servicio_particular, id_servicio_club, tabla_origen
+                           FROM kiosk_precio_config
+                           WHERE tipo_precio = 'id_bd'";
+    $stmtDashboard = $conn->prepare($sqlDashboardPrices);
+    $stmtDashboard->execute();
+    $dashboardPrices = $stmtDashboard->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($dashboardPrices as $dp) {
+        $tabla = $dp['tabla_origen'] ?? 'servicio';
+        if ($tabla === 'examen') {
+            if ($dp['id_servicio_particular']) $examenIds[] = $dp['id_servicio_particular'];
+            if ($dp['id_servicio_club']) $examenIds[] = $dp['id_servicio_club'];
+        } else {
+            if ($dp['id_servicio_particular']) $serviceIds[] = $dp['id_servicio_particular'];
+            if ($dp['id_servicio_club']) $serviceIds[] = $dp['id_servicio_club'];
+        }
+    }
+
+    $serviceIds = array_unique(array_filter($serviceIds));
+    $examenIds = array_unique(array_filter($examenIds));
+
     // 4. OPTIMIZACIÓN: Ejecutar consultas para obtener todos los precios de ambas tablas
     $pricesById = [];
 

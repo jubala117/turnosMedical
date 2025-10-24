@@ -468,6 +468,8 @@ async function handleSubmit(e) {
         }
     }
 
+    console.log('📤 Enviando datos:', formData);
+
     try {
         const url = state.editingId
             ? `${API_BASE}/especialidades_config.php`
@@ -488,6 +490,7 @@ async function handleSubmit(e) {
         });
 
         const data = await response.json();
+        console.log('📥 Respuesta del servidor:', data);
 
         if (data.success) {
             showToast(state.editingId ? 'Especialidad actualizada' : 'Especialidad creada', 'success');
@@ -495,6 +498,7 @@ async function handleSubmit(e) {
             await loadData();
         } else {
             showToast(data.error || 'Error al guardar', 'error');
+            console.error('❌ Error del servidor:', data.error);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -606,6 +610,8 @@ async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
+    console.log('📸 Intentando subir imagen:', file.name, file.type, file.size);
+
     // Validar tamaño
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
@@ -628,12 +634,17 @@ async function handleImageUpload(event) {
         const formData = new FormData();
         formData.append('image', file);
 
+        console.log('📤 Enviando imagen al servidor...');
+
         const response = await fetch(`${API_BASE}/upload_image.php`, {
             method: 'POST',
             body: formData
         });
 
+        console.log('📥 Respuesta HTTP:', response.status, response.statusText);
+
         const data = await response.json();
+        console.log('📥 Datos de respuesta:', data);
 
         if (data.success) {
             // Guardar path en campo oculto
