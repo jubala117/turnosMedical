@@ -6,12 +6,13 @@ y decide cuándo delegar tareas a agentes especializados.
 """
 from typing import List, Dict, Any, Optional
 from .base_agent import BaseAgent
+from ..tools.base_tool import BaseTool
 from ..tools.file_tools import ReadFileTool, WriteFileTool, EditFileTool, ListDirectoryTool
 from ..tools.search_tools import GrepTool, GlobTool
 from ..tools.bash_tool import BashTool
 
 
-class DelegateToAgentTool:
+class DelegateToAgentTool(BaseTool):
     """
     Herramienta especial que permite al orquestador delegar tareas a otros agentes.
 
@@ -19,9 +20,11 @@ class DelegateToAgentTool:
     """
 
     def __init__(self, orchestrator):
+        super().__init__(
+            name="delegate_to_agent",
+            description="Delega una tarea compleja a un agente especializado (code o research)"
+        )
         self.orchestrator = orchestrator
-        self.name = "delegate_to_agent"
-        self.description = "Delega una tarea a un agente especializado"
 
     def execute(self, agent_type: str, task: str) -> str:
         """
@@ -50,32 +53,15 @@ class DelegateToAgentTool:
             "properties": {
                 "agent_type": {
                     "type": "string",
-                    "enum": ["code", "research", "database"],
-                    "description": "Tipo de agente especializado"
+                    "enum": ["code", "research"],
+                    "description": "Tipo de agente: 'code' para código, 'research' para análisis"
                 },
                 "task": {
                     "type": "string",
-                    "description": "Descripción detallada de la tarea"
+                    "description": "Descripción detallada de la tarea a realizar"
                 }
             },
             "required": ["agent_type", "task"]
-        }
-
-    def to_anthropic_format(self):
-        return {
-            "name": self.name,
-            "description": self.description,
-            "input_schema": self.get_schema()
-        }
-
-    def to_openai_format(self):
-        return {
-            "type": "function",
-            "function": {
-                "name": self.name,
-                "description": self.description,
-                "parameters": self.get_schema()
-            }
         }
 
 
