@@ -41,21 +41,55 @@ Sistema de agentes multi-modelo inspirado en Claude Code. Soporta múltiples API
 ### 1. Instalar dependencias
 
 ```bash
-pip install anthropic openai google-generativeai python-dotenv
+# Desde el directorio multi_agent_system/
+pip install -r requirements.txt
 ```
 
 ### 2. Configurar API Keys
 
-Crea un archivo `.env` en la raíz del proyecto:
+Crea un archivo `.env` en el directorio `multi_agent_system/`:
+
+```bash
+# Copiar el ejemplo
+cp .env.example .env
+
+# Editar y agregar tus claves
+# En Windows: notepad .env
+# En Linux/Mac: nano .env
+```
 
 ```env
 ANTHROPIC_API_KEY=tu_clave_anthropic
 OPENAI_API_KEY=tu_clave_openai
 DEEPSEEK_API_KEY=tu_clave_deepseek
-GOOGLE_API_KEY=tu_clave_google
+# GOOGLE_API_KEY=tu_clave_google (opcional)
 ```
 
-### 3. Uso Básico
+### 3. Probar el Sistema
+
+**Opción A: Quickstart Interactivo (Recomendado)**
+
+```bash
+# Desde el directorio multi_agent_system/
+python quickstart.py
+```
+
+**Opción B: Ejecutar Ejemplos**
+
+```bash
+# Desde el directorio multi_agent_system/
+python examples/basic_usage.py
+python examples/advanced_usage.py
+```
+
+**Opción C: Ejecutar Tests**
+
+```bash
+# Desde el directorio multi_agent_system/
+python test_system.py
+```
+
+### 4. Uso Básico en tu Código
 
 ```python
 from multi_agent_system.core.orchestrator import Orchestrator
