@@ -10,14 +10,18 @@ Demuestra características avanzadas como:
 import sys
 import os
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Agregar el directorio padre (turnosMedical) al path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(os.path.dirname(current_dir))  # turnosMedical/
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
 from typing import Dict, Any, List
-from core.orchestrator import Orchestrator
-from core.base_agent import BaseAgent
-from agents.code_agent import CodeAgent
-from agents.research_agent import ResearchAgent
-from tools.base_tool import BaseTool
+from multi_agent_system.core.orchestrator import Orchestrator
+from multi_agent_system.core.base_agent import BaseAgent
+from multi_agent_system.agents.code_agent import CodeAgent
+from multi_agent_system.agents.research_agent import ResearchAgent
+from multi_agent_system.tools.base_tool import BaseTool
 
 
 # Ejemplo 1: Crear una herramienta personalizada

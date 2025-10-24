@@ -7,16 +7,17 @@ Script de inicio rápido para empezar a usar el sistema inmediatamente.
 import os
 import sys
 
-# Verificar que estamos en el directorio correcto
-if not os.path.exists("config/settings.py"):
-    print("❌ Error: Ejecuta este script desde el directorio multi_agent_system/")
-    print("   Uso: python quickstart.py")
-    sys.exit(1)
+# Fix para imports - agregar directorio padre al path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
-from core.orchestrator import Orchestrator
-from agents.code_agent import CodeAgent
-from agents.research_agent import ResearchAgent
-from config.settings import Settings
+# Ahora usar imports absolutos
+from multi_agent_system.core.orchestrator import Orchestrator
+from multi_agent_system.agents.code_agent import CodeAgent
+from multi_agent_system.agents.research_agent import ResearchAgent
+from multi_agent_system.config.settings import Settings
 
 
 def check_api_keys():
