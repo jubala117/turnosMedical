@@ -352,6 +352,56 @@ try {
     foreach ($especialidades as &$especialidad) {
         $idEspecialidad = $especialidad['idEspecialidad'];
 
+        // PRIMERO: Verificar si esta especialidad tiene configuración de precios en el dashboard
+        $sqlPrecio = "SELECT kp.*, kc.tiene_opciones
+                      FROM kiosk_precio_config kp
+                      JOIN kiosk_especialidad_config kc ON kp.id_config = kc.id
+                      WHERE kc.id_especialidad = ?";
+        $stmtPrecio = $conn->prepare($sqlPrecio);
+        $stmtPrecio->execute([$idEspecialidad]);
+        $precioConfig = $stmtPrecio->fetch(PDO::FETCH_ASSOC);
+
+        // Si tiene configuración en el dashboard, usar esos precios
+        if ($precioConfig) {
+            if ($precioConfig['tipo_precio'] === 'fijo') {
+                // Precios fijos configurados
+                $especialidad['precios'] = [
+                    'particular' => floatval($precioConfig['precio_particular_fijo']),
+                    'clubMedical' => floatval($precioConfig['precio_club_fijo']),
+                    'esClubMedical' => $esClubMedical,
+                    'idTipoServicioRegular' => null,
+                    'idTipoServicioClub' => null,
+                    'servicioRegular' => null,
+                    'servicioClub' => null,
+                    'tieneOpciones' => false
+                ];
+            } else {
+                // Precios por ID de BD
+                $precioRegularInfo = null;
+                $precioClubInfo = null;
+
+                if ($precioConfig['id_servicio_particular'] && isset($pricesById[$precioConfig['id_servicio_particular']])) {
+                    $precioRegularInfo = $pricesById[$precioConfig['id_servicio_particular']];
+                }
+                if ($precioConfig['id_servicio_club'] && isset($pricesById[$precioConfig['id_servicio_club']])) {
+                    $precioClubInfo = $pricesById[$precioConfig['id_servicio_club']];
+                }
+
+                $especialidad['precios'] = [
+                    'particular' => $precioRegularInfo ? floatval($precioRegularInfo['precio']) : null,
+                    'clubMedical' => $precioClubInfo ? floatval($precioClubInfo['precio']) : null,
+                    'esClubMedical' => $esClubMedical,
+                    'idTipoServicioRegular' => $precioRegularInfo ? $precioRegularInfo['id'] : null,
+                    'idTipoServicioClub' => $precioClubInfo ? $precioClubInfo['id'] : null,
+                    'servicioRegular' => $precioRegularInfo ? $precioRegularInfo['servicio'] : null,
+                    'servicioClub' => $precioClubInfo ? $precioClubInfo['servicio'] : null,
+                    'tieneOpciones' => false
+                ];
+            }
+            continue; // Ya configuramos los precios, siguiente especialidad
+        }
+
+        // SEGUNDO: Si NO tiene configuración en dashboard, usar mapeo antiguo hardcodeado
         // Verificar si esta especialidad tiene mapeo
         if (!isset($servicioIdMapping[$idEspecialidad]) || $servicioIdMapping[$idEspecialidad] === null) {
             $especialidad['precios'] = [
