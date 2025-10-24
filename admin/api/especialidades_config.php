@@ -112,14 +112,35 @@ function getOpciones($conn, $idConfig) {
 function handlePost($conn) {
     $data = json_decode(file_get_contents("php://input"), true);
 
-    if (!isset($data['id_especialidad'])) {
+    // Validar que se envió el nombre de la especialidad
+    if (!isset($data['nombre_especialidad']) || empty(trim($data['nombre_especialidad']))) {
         http_response_code(400);
-        echo json_encode(['error' => 'id_especialidad es requerido']);
+        echo json_encode(['error' => 'El nombre de la especialidad es requerido']);
         return;
     }
 
     try {
         $conn->beginTransaction();
+
+        // Crear o buscar la especialidad en la tabla 'especialidad'
+        $idDispensario = 2; // Quitumbe
+        $nombreEspecialidad = trim($data['nombre_especialidad']);
+
+        // Verificar si ya existe una especialidad con ese nombre
+        $sqlCheck = "SELECT idEspecialidad FROM especialidad WHERE descEspecialidad = ? AND idDispensario = ?";
+        $stmtCheck = $conn->prepare($sqlCheck);
+        $stmtCheck->execute([$nombreEspecialidad, $idDispensario]);
+        $existente = $stmtCheck->fetch(PDO::FETCH_ASSOC);
+
+        if ($existente) {
+            $idEspecialidad = $existente['idEspecialidad'];
+        } else {
+            // Crear nueva especialidad
+            $sqlInsertEsp = "INSERT INTO especialidad (descEspecialidad, idDispensario, idEstado) VALUES (?, ?, 1)";
+            $stmtInsertEsp = $conn->prepare($sqlInsertEsp);
+            $stmtInsertEsp->execute([$nombreEspecialidad, $idDispensario]);
+            $idEspecialidad = $conn->lastInsertId();
+        }
 
         // Insertar configuración principal
         $sql = "INSERT INTO kiosk_especialidad_config
@@ -128,7 +149,7 @@ function handlePost($conn) {
 
         $stmt = $conn->prepare($sql);
         $stmt->execute([
-            $data['id_especialidad'],
+            $idEspecialidad,
             $data['activo'] ?? 1,
             $data['orden'] ?? 0,
             $data['tiene_opciones'] ?? 0,
@@ -197,6 +218,25 @@ function handlePut($conn) {
 
     try {
         $conn->beginTransaction();
+
+        // Si se envió un nuevo nombre, actualizar la tabla especialidad
+        if (isset($data['nombre_especialidad']) && !empty(trim($data['nombre_especialidad']))) {
+            // Obtener id_especialidad actual
+            $sqlGetId = "SELECT id_especialidad FROM kiosk_especialidad_config WHERE id = ?";
+            $stmtGetId = $conn->prepare($sqlGetId);
+            $stmtGetId->execute([$data['id']]);
+            $result = $stmtGetId->fetch(PDO::FETCH_ASSOC);
+
+            if ($result) {
+                $idEspecialidad = $result['id_especialidad'];
+                $nombreEspecialidad = trim($data['nombre_especialidad']);
+
+                // Actualizar nombre en tabla especialidad
+                $sqlUpdateName = "UPDATE especialidad SET descEspecialidad = ? WHERE idEspecialidad = ?";
+                $stmtUpdateName = $conn->prepare($sqlUpdateName);
+                $stmtUpdateName->execute([$nombreEspecialidad, $idEspecialidad]);
+            }
+        }
 
         // Actualizar configuración principal
         $sql = "UPDATE kiosk_especialidad_config

@@ -8,7 +8,6 @@ const API_BASE = 'api';
 // Estado global
 const state = {
     especialidades: [],
-    especialidadesDisponibles: [],
     currentFilter: 'all',
     currentTipo: 'all',
     searchTerm: '',
@@ -66,11 +65,7 @@ function switchTab(tabName) {
 
 async function loadData() {
     try {
-        await Promise.all([
-            loadEspecialidades(),
-            loadEspecialidadesDisponibles()
-        ]);
-
+        await loadEspecialidades();
         renderEspecialidades();
         updateStats();
     } catch (error) {
@@ -88,24 +83,6 @@ async function loadEspecialidades() {
     } else {
         throw new Error(data.error || 'Error al cargar especialidades');
     }
-}
-
-async function loadEspecialidadesDisponibles() {
-    // Cargar todas las especialidades de la BD original
-    const response = await fetch('../API/get_especialidades.php');
-    const especialidades = await response.json();
-    state.especialidadesDisponibles = especialidades;
-
-    // Llenar select del modal
-    const select = document.getElementById('form-especialidad');
-    select.innerHTML = '<option value="">Seleccionar especialidad...</option>';
-
-    especialidades.forEach(esp => {
-        const option = document.createElement('option');
-        option.value = esp.idEspecialidad;
-        option.textContent = esp.descEspecialidad;
-        select.appendChild(option);
-    });
 }
 
 // =============================================================================
@@ -410,7 +387,7 @@ function openModal(mode, id = null) {
     if (mode === 'create') {
         title.textContent = 'Nueva Especialidad';
         document.getElementById('specialty-form').reset();
-        document.getElementById('form-activo').checked = true;
+        document.getElementById('form-nombre-especialidad').value = '';
         hideImagePreview(); // Limpiar preview de imagen
     } else if (mode === 'edit') {
         title.textContent = 'Editar Especialidad';
@@ -430,9 +407,7 @@ function loadFormData(id) {
     if (!esp) return;
 
     document.getElementById('form-id').value = esp.id;
-    document.getElementById('form-especialidad').value = esp.id_especialidad;
-    document.getElementById('form-activo').checked = esp.activo;
-    document.getElementById('form-tipo-seccion').value = esp.tipo_seccion;
+    document.getElementById('form-nombre-especialidad').value = esp.nombre_especialidad;
     document.getElementById('form-tiene-opciones').checked = esp.tiene_opciones;
 
     // Cargar imagen personalizada si existe
@@ -463,10 +438,17 @@ function loadFormData(id) {
 async function handleSubmit(e) {
     e.preventDefault();
 
+    const nombreEspecialidad = document.getElementById('form-nombre-especialidad').value.trim();
+
+    if (!nombreEspecialidad) {
+        showToast('Por favor ingresa un nombre de especialidad', 'error');
+        return;
+    }
+
     const formData = {
-        id_especialidad: parseInt(document.getElementById('form-especialidad').value),
-        activo: document.getElementById('form-activo').checked ? 1 : 0,
-        tipo_seccion: document.getElementById('form-tipo-seccion').value,
+        nombre_especialidad: nombreEspecialidad,
+        activo: 1, // Siempre activo
+        tipo_seccion: 'consulta', // Siempre consulta en la pestaña de especialidades
         tiene_opciones: document.getElementById('form-tiene-opciones').checked ? 1 : 0,
         mostrar_en_kiosco: 1,
         orden: 0,
