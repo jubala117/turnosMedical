@@ -144,6 +144,75 @@ function renderEspecialidades() {
     }
 
     container.innerHTML = filtered.map(esp => createEspecialidadCard(esp)).join('');
+
+    // Inicializar drag & drop
+    initSortable();
+}
+
+// =============================================================================
+// DRAG & DROP (REORDENAMIENTO)
+// =============================================================================
+
+let sortableInstance = null;
+
+function initSortable() {
+    const container = document.getElementById('especialidades-container');
+
+    // Destruir instancia anterior si existe
+    if (sortableInstance) {
+        sortableInstance.destroy();
+    }
+
+    // Crear nueva instancia de Sortable
+    sortableInstance = Sortable.create(container, {
+        animation: 150,
+        handle: '.drag-handle',
+        ghostClass: 'sortable-ghost',
+        dragClass: 'sortable-drag',
+        onEnd: async (evt) => {
+            await saveNewOrder();
+        }
+    });
+}
+
+async function saveNewOrder() {
+    const container = document.getElementById('especialidades-container');
+    const cards = container.querySelectorAll('.specialty-card');
+
+    // Crear array con el nuevo orden
+    const newOrder = Array.from(cards).map((card, index) => ({
+        id: parseInt(card.dataset.id),
+        orden: index + 1
+    }));
+
+    try {
+        const response = await fetch(`${API_BASE}/especialidades_config.php`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'reorder',
+                order: newOrder
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Orden guardado correctamente', 'success');
+            // Actualizar el estado local
+            await loadEspecialidades();
+        } else {
+            showToast('Error al guardar el orden', 'error');
+            // Recargar para restaurar el orden original
+            renderEspecialidades();
+        }
+    } catch (error) {
+        console.error('Error saving order:', error);
+        showToast('Error al guardar el orden', 'error');
+        renderEspecialidades();
+    }
 }
 
 function createEspecialidadCard(esp) {
@@ -165,7 +234,12 @@ function createEspecialidadCard(esp) {
            </div>`;
 
     return `
-        <div class="specialty-card bg-white rounded-lg shadow hover:shadow-xl p-6">
+        <div class="specialty-card bg-white rounded-lg shadow hover:shadow-xl p-6" data-id="${esp.id}">
+            <!-- Drag Handle -->
+            <div class="drag-handle flex justify-center mb-2 -mt-2">
+                <i class="fas fa-grip-horizontal text-gray-400 text-lg"></i>
+            </div>
+
             <!-- Header con imagen -->
             <div class="flex items-start mb-4 space-x-4">
                 ${imagenHtml}
