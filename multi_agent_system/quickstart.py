@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 🚀 Multi-Agent System - Quick Start
 
@@ -6,6 +7,12 @@ Script de inicio rápido para empezar a usar el sistema inmediatamente.
 """
 import os
 import sys
+import io
+
+# Fix para encoding en Windows
+if sys.platform == 'win32':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 # Fix para imports - agregar directorio padre al path
 current_dir = os.path.dirname(os.path.abspath(__file__))
