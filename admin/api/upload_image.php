@@ -84,12 +84,16 @@ try {
     }
 
     // Opcional: Redimensionar imagen para optimización
+    // DESHABILITADO: Requiere extensión GD de PHP
+    // Para habilitar: Activa extension=gd en php.ini y reinicia Apache
+    /*
     try {
         resizeImage($filepath, 400, 400);
     } catch (Exception $e) {
         // Si falla el redimensionamiento, continuar con la imagen original
         error_log('Error al redimensionar: ' . $e->getMessage());
     }
+    */
 
     echo json_encode([
         'success' => true,
