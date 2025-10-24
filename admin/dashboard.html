@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Kiosco Medical Care</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        .specialty-card {
+            transition: all 0.3s ease;
+        }
+        .specialty-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .modal {
+            display: none;
+        }
+        .modal.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <i class="fas fa-hospital text-3xl"></i>
+                    <div>
+                        <h1 class="text-2xl font-bold">Dashboard Kiosco</h1>
+                        <p class="text-blue-200 text-sm">Medical Care - Administración</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <a href="../kiosco.html" target="_blank" class="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors flex items-center space-x-2">
+                        <i class="fas fa-eye"></i>
+                        <span>Ver Kiosco</span>
+                    </a>
+                    <button class="bg-blue-700 hover:bg-blue-800 px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-user"></i>
+                        Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="bg-white shadow">
+        <div class="container mx-auto px-6">
+            <nav class="flex space-x-8">
+                <button class="tab-btn active py-4 border-b-2 border-blue-600 text-blue-600 font-semibold" data-tab="especialidades">
+                    <i class="fas fa-stethoscope mr-2"></i>
+                    Especialidades
+                </button>
+                <button class="tab-btn py-4 border-b-2 border-transparent text-gray-600 hover:text-blue-600 font-semibold" data-tab="examenes">
+                    <i class="fas fa-flask mr-2"></i>
+                    Exámenes
+                </button>
+                <button class="tab-btn py-4 border-b-2 border-transparent text-gray-600 hover:text-blue-600 font-semibold" data-tab="configuracion">
+                    <i class="fas fa-cog mr-2"></i>
+                    Configuración
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-6 py-8">
+        <!-- Tab: Especialidades -->
+        <div id="tab-especialidades" class="tab-content">
+            <!-- Header Actions -->
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800">Gestión de Especialidades</h2>
+                    <p class="text-gray-600 mt-1">Administra las especialidades que se muestran en el kiosco</p>
+                </div>
+                <button onclick="openModal('create')" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors shadow-lg flex items-center space-x-2">
+                    <i class="fas fa-plus"></i>
+                    <span>Nueva Especialidad</span>
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Total Especialidades</p>
+                            <p class="text-3xl font-bold text-gray-800" id="stat-total">0</p>
+                        </div>
+                        <i class="fas fa-stethoscope text-4xl text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Activas</p>
+                            <p class="text-3xl font-bold text-green-600" id="stat-activas">0</p>
+                        </div>
+                        <i class="fas fa-check-circle text-4xl text-green-600"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Inactivas</p>
+                            <p class="text-3xl font-bold text-red-600" id="stat-inactivas">0</p>
+                        </div>
+                        <i class="fas fa-times-circle text-4xl text-red-600"></i>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-600 text-sm">Con Opciones</p>
+                            <p class="text-3xl font-bold text-purple-600" id="stat-opciones">0</p>
+                        </div>
+                        <i class="fas fa-list text-4xl text-purple-600"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="bg-white p-4 rounded-lg shadow mb-6">
+                <div class="flex space-x-4">
+                    <div class="flex-1">
+                        <input type="text" id="search-input" placeholder="Buscar especialidad..." class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <select id="filter-status" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">Todas</option>
+                        <option value="active">Activas</option>
+                        <option value="inactive">Inactivas</option>
+                    </select>
+                    <select id="filter-tipo" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="all">Todos los tipos</option>
+                        <option value="consulta">Consultas</option>
+                        <option value="examen_lista">Exámenes (lista)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Especialidades List -->
+            <div id="especialidades-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Loading -->
+                <div class="col-span-full text-center py-12">
+                    <i class="fas fa-spinner fa-spin text-4xl text-blue-600 mb-4"></i>
+                    <p class="text-gray-600">Cargando especialidades...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab: Exámenes -->
+        <div id="tab-examenes" class="tab-content hidden">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Gestión de Exámenes</h2>
+            <div class="bg-white p-8 rounded-lg shadow text-center">
+                <i class="fas fa-flask text-6xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600">Próximamente: Gestión de exámenes de laboratorio, imagenología, etc.</p>
+            </div>
+        </div>
+
+        <!-- Tab: Configuración -->
+        <div id="tab-configuracion" class="tab-content hidden">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Configuración General</h2>
+            <div class="bg-white p-8 rounded-lg shadow text-center">
+                <i class="fas fa-cog text-6xl text-gray-400 mb-4"></i>
+                <p class="text-gray-600">Próximamente: Configuración general del kiosco</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Crear/Editar Especialidad -->
+    <div id="specialty-modal" class="modal fixed inset-0 bg-black bg-opacity-50 items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+            <!-- Modal Header -->
+            <div class="bg-blue-600 text-white p-6 rounded-t-lg">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold" id="modal-title">Nueva Especialidad</h3>
+                    <button onclick="closeModal()" class="text-white hover:text-gray-200 text-2xl">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Body -->
+            <form id="specialty-form" class="p-6 space-y-6">
+                <input type="hidden" id="form-id">
+
+                <!-- Especialidad -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Especialidad</label>
+                    <select id="form-especialidad" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="">Seleccionar especialidad...</option>
+                        <!-- Se llenará dinámicamente -->
+                    </select>
+                </div>
+
+                <!-- Activo -->
+                <div class="flex items-center">
+                    <input type="checkbox" id="form-activo" checked class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <label for="form-activo" class="ml-3 text-sm font-semibold text-gray-700">Activo en kiosco</label>
+                </div>
+
+                <!-- Tipo de Sección -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Sección</label>
+                    <select id="form-tipo-seccion" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="consulta">Consulta (con doctores)</option>
+                        <option value="examen_lista">Exámenes (lista simple)</option>
+                    </select>
+                </div>
+
+                <!-- Tiene Opciones -->
+                <div class="flex items-center">
+                    <input type="checkbox" id="form-tiene-opciones" class="w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                    <label for="form-tiene-opciones" class="ml-3 text-sm font-semibold text-gray-700">Tiene opciones múltiples</label>
+                    <span class="ml-2 text-xs text-gray-500">(ej: "Una Hora", "Media Hora")</span>
+                </div>
+
+                <!-- Imagen Personalizada -->
+                <div class="border-t pt-6">
+                    <h4 class="text-lg font-bold text-gray-800 mb-4">Imagen Personalizada</h4>
+                    <p class="text-sm text-gray-600 mb-4">Sube una imagen personalizada o usa el ícono por defecto</p>
+
+                    <input type="hidden" id="form-imagen-path" value="">
+
+                    <!-- Preview de imagen actual -->
+                    <div id="image-preview-container" class="hidden mb-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div class="flex items-center space-x-4">
+                                <img id="image-preview" src="" alt="Preview" class="w-24 h-24 object-cover rounded-lg border border-gray-300">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-800">Imagen actual</p>
+                                    <p id="image-preview-name" class="text-xs text-gray-600"></p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="removeImage()" class="text-red-600 hover:text-red-700 font-semibold text-sm">
+                                <i class="fas fa-trash mr-1"></i>
+                                Eliminar
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Upload button -->
+                    <div id="upload-button-container">
+                        <label for="form-imagen" class="cursor-pointer inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg transition-colors">
+                            <i class="fas fa-cloud-upload-alt mr-2 text-blue-600"></i>
+                            <span class="text-sm font-semibold text-gray-700">Subir Imagen</span>
+                        </label>
+                        <input type="file" id="form-imagen" accept="image/jpeg,image/png,image/gif,image/webp" class="hidden" onchange="handleImageUpload(event)">
+                        <p class="text-xs text-gray-500 mt-2">JPG, PNG, GIF o WebP - Máximo 5MB</p>
+                    </div>
+
+                    <!-- Loading state -->
+                    <div id="upload-loading" class="hidden">
+                        <div class="flex items-center space-x-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <i class="fas fa-spinner fa-spin text-blue-600"></i>
+                            <p class="text-sm text-blue-700 font-semibold">Subiendo imagen...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuración de Precio (solo si NO tiene opciones) -->
+                <div id="precio-simple-section">
+                    <div class="border-t pt-6">
+                        <h4 class="text-lg font-bold text-gray-800 mb-4">Configuración de Precios</h4>
+
+                        <!-- Tipo de Precio -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Precio</label>
+                            <select id="form-tipo-precio" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="id_bd">Desde Base de Datos (ID)</option>
+                                <option value="fijo">Precio Fijo</option>
+                            </select>
+                        </div>
+
+                        <!-- Precios por ID -->
+                        <div id="precios-id-section" class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">ID Servicio Particular</label>
+                                <input type="number" id="form-id-particular" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">ID Servicio Club</label>
+                                <input type="number" id="form-id-club" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+
+                        <!-- Precios Fijos -->
+                        <div id="precios-fijo-section" class="grid grid-cols-2 gap-4 hidden">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Precio Particular ($)</label>
+                                <input type="number" step="0.01" id="form-precio-particular" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-700 mb-2">Precio Club ($)</label>
+                                <input type="number" step="0.01" id="form-precio-club" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Opciones Múltiples Section -->
+                <div id="opciones-section" class="hidden">
+                    <div class="border-t pt-6">
+                        <h4 class="text-lg font-bold text-gray-800 mb-4">Opciones Múltiples</h4>
+                        <p class="text-sm text-gray-600 mb-4">Próximamente: Gestión de opciones múltiples</p>
+                    </div>
+                </div>
+
+                <!-- Modal Footer -->
+                <div class="flex justify-end space-x-4 border-t pt-6">
+                    <button type="button" onclick="closeModal()" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors">
+                        <i class="fas fa-save mr-2"></i>
+                        Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-gray-800 text-white px-6 py-4 rounded-lg shadow-lg transform transition-transform translate-y-20 opacity-0" style="transition: all 0.3s ease;">
+        <div class="flex items-center space-x-3">
+            <i id="toast-icon" class="fas fa-check-circle text-2xl"></i>
+            <p id="toast-message"></p>
+        </div>
+    </div>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
