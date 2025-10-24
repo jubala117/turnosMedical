@@ -1,0 +1,18 @@
+# Multi-Agent System Requirements
+
+# Utilidades (Requerido)
+python-dotenv>=1.0.0
+
+# APIs de LLMs (Al menos una requerida)
+# Instala solo las que vayas a usar
+anthropic>=0.40.0
+openai>=1.12.0
+
+# Opcional: Google Gemini (puede causar problemas en algunos sistemas)
+# Descomenta si quieres usar Gemini:
+# google-generativeai>=0.3.0
+
+# Opcional: Para desarrollo
+# pytest>=7.4.0
+# black>=23.0.0
+# mypy>=1.0.0

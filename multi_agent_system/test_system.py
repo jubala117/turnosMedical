@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+"""
+Test básico del Multi-Agent System
+
+Verifica que todos los componentes se importen correctamente.
+"""
+import sys
+
+print("🧪 Testing Multi-Agent System...\n")
+
+# Test 1: Imports básicos
+print("1️⃣ Testing imports...")
+try:
+    from config.settings import Settings
+    from core.api_client import MultiAPIClient
+    from core.context_manager import ContextManager
+    from core.base_agent import BaseAgent
+    from core.orchestrator import Orchestrator
+    print("   ✅ Core imports OK")
+except Exception as e:
+    print(f"   ❌ Core imports FAILED: {e}")
+    sys.exit(1)
+
+# Test 2: Agents
+print("\n2️⃣ Testing agents...")
+try:
+    from agents.code_agent import CodeAgent
+    from agents.research_agent import ResearchAgent
+    print("   ✅ Agents imports OK")
+except Exception as e:
+    print(f"   ❌ Agents imports FAILED: {e}")
+    sys.exit(1)
+
+# Test 3: Tools
+print("\n3️⃣ Testing tools...")
+try:
+    from tools.base_tool import BaseTool, ToolRegistry
+    from tools.file_tools import ReadFileTool, WriteFileTool
+    from tools.search_tools import GrepTool, GlobTool
+    from tools.bash_tool import BashTool
+    print("   ✅ Tools imports OK")
+except Exception as e:
+    print(f"   ❌ Tools imports FAILED: {e}")
+    sys.exit(1)
+
+# Test 4: Configuración
+print("\n4️⃣ Testing configuration...")
+try:
+    # Verificar que la config se carga
+    models = Settings.MODELS
+    assert "claude" in models
+    assert "openai" in models
+    assert "deepseek" in models
+    print("   ✅ Configuration OK")
+except Exception as e:
+    print(f"   ❌ Configuration FAILED: {e}")
+    sys.exit(1)
+
+# Test 5: API Keys (advertencia si no están)
+print("\n5️⃣ Checking API keys...")
+api_keys = {
+    "Anthropic": Settings.ANTHROPIC_API_KEY,
+    "OpenAI": Settings.OPENAI_API_KEY,
+    "DeepSeek": Settings.DEEPSEEK_API_KEY,
+    "Google": Settings.GOOGLE_API_KEY
+}
+
+available = sum(1 for key in api_keys.values() if key)
+if available > 0:
+    print(f"   ✅ {available} API key(s) configured")
+    for name, key in api_keys.items():
+        if key:
+            print(f"      ✓ {name}")
+else:
+    print("   ⚠️  No API keys configured (expected for testing)")
+    print("      Configure keys in .env to use the system")
+
+# Test 6: Crear herramienta de prueba
+print("\n6️⃣ Testing tool creation...")
+try:
+    read_tool = ReadFileTool()
+    assert read_tool.name == "read_file"
+    schema = read_tool.get_schema()
+    assert "properties" in schema
+    print("   ✅ Tool creation OK")
+except Exception as e:
+    print(f"   ❌ Tool creation FAILED: {e}")
+    sys.exit(1)
+
+# Test 7: Context Manager
+print("\n7️⃣ Testing context manager...")
+try:
+    context = ContextManager(max_tokens=1000)
+    context.add_message("user", "Test message")
+    assert len(context.messages) == 1
+    summary = context.get_summary()
+    assert summary["total_messages"] == 1
+    print("   ✅ Context manager OK")
+except Exception as e:
+    print(f"   ❌ Context manager FAILED: {e}")
+    sys.exit(1)
+
+# Resumen
+print("\n" + "="*60)
+print("✅ ALL TESTS PASSED!")
+print("="*60)
+print("\n📋 System ready to use!")
+print("\nNext steps:")
+print("  1. Configure API keys in .env")
+print("  2. Run: python quickstart.py")
+print("  3. Or try: python examples/basic_usage.py")
+print("")
