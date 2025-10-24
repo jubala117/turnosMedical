@@ -101,10 +101,15 @@ class UIManager {
         if (normalizedName === 'imagen') icono = 'fa-x-ray';
         if (normalizedName === 'rayos_x') icono = 'fa-x-ray';
         if (normalizedName === 'odontologia') icono = 'fa-tooth';
-        
+
+        // Usar imagen personalizada si existe, sino usar imagen por defecto
+        const imageSrc = especialidad.imagen_personalizada
+            ? especialidad.imagen_personalizada
+            : `images/${imageName}.png`;
+
         return `
             <div class="flex-1 relative overflow-hidden rounded-t-xl">
-                <img src="images/${imageName}.png" alt="${especialidad.descEspecialidad}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <img src="${imageSrc}" alt="${especialidad.descEspecialidad}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                 <i class="fas ${icono} text-5xl text-blue-800 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style="display: none;"></i>
             </div>
             <div class="p-4 text-center">
@@ -118,9 +123,14 @@ class UIManager {
 
     // Crear HTML para especialidades normales
     static crearHTMLEspecialidadNormal(especialidad, imageName, preciosHTML) {
+        // Usar imagen personalizada si existe, sino usar imagen por defecto
+        const imageSrc = especialidad.imagen_personalizada
+            ? especialidad.imagen_personalizada
+            : `images/${imageName}.png`;
+
         return `
             <div class="flex-1 relative overflow-hidden rounded-t-xl">
-                <img src="images/${imageName}.png" alt="${especialidad.descEspecialidad}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <img src="${imageSrc}" alt="${especialidad.descEspecialidad}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                 <i class="fas fa-stethoscope text-5xl text-blue-800 absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" style="display: none;"></i>
             </div>
             <div class="p-4 text-center">
