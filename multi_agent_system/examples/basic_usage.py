@@ -10,12 +10,15 @@ Este ejemplo muestra cómo:
 import sys
 import os
 
-# Agregar el directorio padre al path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Agregar el directorio padre (turnosMedical) al path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(os.path.dirname(current_dir))  # turnosMedical/
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
-from core.orchestrator import Orchestrator
-from agents.code_agent import CodeAgent
-from agents.research_agent import ResearchAgent
+from multi_agent_system.core.orchestrator import Orchestrator
+from multi_agent_system.agents.code_agent import CodeAgent
+from multi_agent_system.agents.research_agent import ResearchAgent
 
 
 def example_1_simple_orchestrator():

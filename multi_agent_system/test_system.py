@@ -5,17 +5,24 @@ Test básico del Multi-Agent System
 Verifica que todos los componentes se importen correctamente.
 """
 import sys
+import os
+
+# Fix para imports - agregar directorio padre al path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.insert(0, parent_dir)
 
 print("🧪 Testing Multi-Agent System...\n")
 
 # Test 1: Imports básicos
 print("1️⃣ Testing imports...")
 try:
-    from config.settings import Settings
-    from core.api_client import MultiAPIClient
-    from core.context_manager import ContextManager
-    from core.base_agent import BaseAgent
-    from core.orchestrator import Orchestrator
+    from multi_agent_system.config.settings import Settings
+    from multi_agent_system.core.api_client import MultiAPIClient
+    from multi_agent_system.core.context_manager import ContextManager
+    from multi_agent_system.core.base_agent import BaseAgent
+    from multi_agent_system.core.orchestrator import Orchestrator
     print("   ✅ Core imports OK")
 except Exception as e:
     print(f"   ❌ Core imports FAILED: {e}")
@@ -24,8 +31,8 @@ except Exception as e:
 # Test 2: Agents
 print("\n2️⃣ Testing agents...")
 try:
-    from agents.code_agent import CodeAgent
-    from agents.research_agent import ResearchAgent
+    from multi_agent_system.agents.code_agent import CodeAgent
+    from multi_agent_system.agents.research_agent import ResearchAgent
     print("   ✅ Agents imports OK")
 except Exception as e:
     print(f"   ❌ Agents imports FAILED: {e}")
@@ -34,10 +41,10 @@ except Exception as e:
 # Test 3: Tools
 print("\n3️⃣ Testing tools...")
 try:
-    from tools.base_tool import BaseTool, ToolRegistry
-    from tools.file_tools import ReadFileTool, WriteFileTool
-    from tools.search_tools import GrepTool, GlobTool
-    from tools.bash_tool import BashTool
+    from multi_agent_system.tools.base_tool import BaseTool, ToolRegistry
+    from multi_agent_system.tools.file_tools import ReadFileTool, WriteFileTool
+    from multi_agent_system.tools.search_tools import GrepTool, GlobTool
+    from multi_agent_system.tools.bash_tool import BashTool
     print("   ✅ Tools imports OK")
 except Exception as e:
     print(f"   ❌ Tools imports FAILED: {e}")
