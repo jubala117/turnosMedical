@@ -11,13 +11,35 @@
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+    <!-- SortableJS for drag & drop -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
     <style>
         .specialty-card {
             transition: all 0.3s ease;
+            cursor: grab;
         }
         .specialty-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        .specialty-card:active {
+            cursor: grabbing;
+        }
+        .sortable-ghost {
+            opacity: 0.4;
+            background: #e5e7eb;
+        }
+        .sortable-drag {
+            cursor: grabbing;
+            transform: rotate(3deg);
+        }
+        .drag-handle {
+            cursor: grab;
+            touch-action: none;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
         }
         .modal {
             display: none;

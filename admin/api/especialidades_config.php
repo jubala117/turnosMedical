@@ -183,6 +183,12 @@ function handlePost($conn) {
 function handlePut($conn) {
     $data = json_decode(file_get_contents("php://input"), true);
 
+    // Caso especial: reordenamiento masivo
+    if (isset($data['action']) && $data['action'] === 'reorder') {
+        handleReorder($conn, $data);
+        return;
+    }
+
     if (!isset($data['id'])) {
         http_response_code(400);
         echo json_encode(['error' => 'ID es requerido']);
@@ -247,6 +253,50 @@ function handlePut($conn) {
         $conn->rollBack();
         http_response_code(500);
         echo json_encode(['error' => 'Error al actualizar especialidad: ' . $e->getMessage()]);
+    }
+}
+
+/**
+ * PUT - Reordenar especialidades (acción masiva)
+ */
+function handleReorder($conn, $data) {
+    if (!isset($data['order']) || !is_array($data['order'])) {
+        http_response_code(400);
+        echo json_encode(['error' => 'El array "order" es requerido']);
+        return;
+    }
+
+    try {
+        $conn->beginTransaction();
+
+        $sql = "UPDATE kiosk_especialidad_config SET orden = ? WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+
+        foreach ($data['order'] as $item) {
+            if (!isset($item['id']) || !isset($item['orden'])) {
+                $conn->rollBack();
+                http_response_code(400);
+                echo json_encode(['error' => 'Cada elemento debe tener "id" y "orden"']);
+                return;
+            }
+
+            $stmt->execute([
+                $item['orden'],
+                $item['id']
+            ]);
+        }
+
+        $conn->commit();
+
+        echo json_encode([
+            'success' => true,
+            'message' => 'Orden actualizado exitosamente'
+        ]);
+
+    } catch (PDOException $e) {
+        $conn->rollBack();
+        http_response_code(500);
+        echo json_encode(['error' => 'Error al actualizar orden: ' . $e->getMessage()]);
     }
 }
 
