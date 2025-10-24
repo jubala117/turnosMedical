@@ -30,7 +30,14 @@ $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
 // Crear directorio si no existe
 if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0755, true);
+    if (!mkdir($uploadDir, 0777, true)) {
+        throw new Exception('No se pudo crear el directorio de uploads. Verifica permisos del servidor.');
+    }
+}
+
+// Verificar permisos de escritura
+if (!is_writable($uploadDir)) {
+    throw new Exception('El directorio de uploads no tiene permisos de escritura. Path: ' . $uploadDir);
 }
 
 try {
