@@ -8,7 +8,6 @@ const API_BASE = 'api';
 // Estado global
 const state = {
     especialidades: [],
-    especialidadesDisponibles: [],
     currentFilter: 'all',
     currentTipo: 'all',
     searchTerm: '',
@@ -66,11 +65,7 @@ function switchTab(tabName) {
 
 async function loadData() {
     try {
-        await Promise.all([
-            loadEspecialidades(),
-            loadEspecialidadesDisponibles()
-        ]);
-
+        await loadEspecialidades();
         renderEspecialidades();
         updateStats();
     } catch (error) {
@@ -88,24 +83,6 @@ async function loadEspecialidades() {
     } else {
         throw new Error(data.error || 'Error al cargar especialidades');
     }
-}
-
-async function loadEspecialidadesDisponibles() {
-    // Cargar todas las especialidades de la BD original
-    const response = await fetch('../API/get_especialidades.php');
-    const especialidades = await response.json();
-    state.especialidadesDisponibles = especialidades;
-
-    // Llenar select del modal
-    const select = document.getElementById('form-especialidad');
-    select.innerHTML = '<option value="">Seleccionar especialidad...</option>';
-
-    especialidades.forEach(esp => {
-        const option = document.createElement('option');
-        option.value = esp.idEspecialidad;
-        option.textContent = esp.descEspecialidad;
-        select.appendChild(option);
-    });
 }
 
 // =============================================================================
@@ -144,6 +121,95 @@ function renderEspecialidades() {
     }
 
     container.innerHTML = filtered.map(esp => createEspecialidadCard(esp)).join('');
+
+    // Inicializar drag & drop
+    initSortable();
+}
+
+// =============================================================================
+// DRAG & DROP (REORDENAMIENTO)
+// =============================================================================
+
+let sortableInstance = null;
+
+function initSortable() {
+    const container = document.getElementById('especialidades-container');
+
+    // Destruir instancia anterior si existe
+    if (sortableInstance) {
+        sortableInstance.destroy();
+    }
+
+    // Solo inicializar si hay elementos
+    const items = container.querySelectorAll('.specialty-card');
+    if (items.length === 0) {
+        return;
+    }
+
+    // Crear nueva instancia de Sortable
+    sortableInstance = Sortable.create(container, {
+        animation: 200,
+        handle: '.drag-handle',
+        ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
+        dragClass: 'sortable-drag',
+        forceFallback: true,
+        fallbackTolerance: 3,
+        touchStartThreshold: 5,
+        delay: 0,
+        delayOnTouchOnly: false,
+        onStart: function(evt) {
+            console.log('Drag started', evt.item);
+        },
+        onEnd: async (evt) => {
+            console.log('Drag ended', evt.oldIndex, '->', evt.newIndex);
+            if (evt.oldIndex !== evt.newIndex) {
+                await saveNewOrder();
+            }
+        }
+    });
+
+    console.log('SortableJS initialized with', items.length, 'items');
+}
+
+async function saveNewOrder() {
+    const container = document.getElementById('especialidades-container');
+    const cards = container.querySelectorAll('.specialty-card');
+
+    // Crear array con el nuevo orden
+    const newOrder = Array.from(cards).map((card, index) => ({
+        id: parseInt(card.dataset.id),
+        orden: index + 1
+    }));
+
+    try {
+        const response = await fetch(`${API_BASE}/especialidades_config.php`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                action: 'reorder',
+                order: newOrder
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast('Orden guardado correctamente', 'success');
+            // Actualizar el estado local
+            await loadEspecialidades();
+        } else {
+            showToast('Error al guardar el orden', 'error');
+            // Recargar para restaurar el orden original
+            renderEspecialidades();
+        }
+    } catch (error) {
+        console.error('Error saving order:', error);
+        showToast('Error al guardar el orden', 'error');
+        renderEspecialidades();
+    }
 }
 
 function createEspecialidadCard(esp) {
@@ -165,7 +231,12 @@ function createEspecialidadCard(esp) {
            </div>`;
 
     return `
-        <div class="specialty-card bg-white rounded-lg shadow hover:shadow-xl p-6">
+        <div class="specialty-card bg-white rounded-lg shadow hover:shadow-xl p-6" data-id="${esp.id}">
+            <!-- Drag Handle -->
+            <div class="drag-handle flex justify-center items-center mb-3 -mt-3" title="Arrastrar para reordenar">
+                <i class="fas fa-grip-vertical text-gray-400 hover:text-blue-600 text-2xl"></i>
+            </div>
+
             <!-- Header con imagen -->
             <div class="flex items-start mb-4 space-x-4">
                 ${imagenHtml}
@@ -316,7 +387,7 @@ function openModal(mode, id = null) {
     if (mode === 'create') {
         title.textContent = 'Nueva Especialidad';
         document.getElementById('specialty-form').reset();
-        document.getElementById('form-activo').checked = true;
+        document.getElementById('form-nombre-especialidad').value = '';
         hideImagePreview(); // Limpiar preview de imagen
     } else if (mode === 'edit') {
         title.textContent = 'Editar Especialidad';
@@ -336,9 +407,7 @@ function loadFormData(id) {
     if (!esp) return;
 
     document.getElementById('form-id').value = esp.id;
-    document.getElementById('form-especialidad').value = esp.id_especialidad;
-    document.getElementById('form-activo').checked = esp.activo;
-    document.getElementById('form-tipo-seccion').value = esp.tipo_seccion;
+    document.getElementById('form-nombre-especialidad').value = esp.nombre_especialidad;
     document.getElementById('form-tiene-opciones').checked = esp.tiene_opciones;
 
     // Cargar imagen personalizada si existe
@@ -369,10 +438,17 @@ function loadFormData(id) {
 async function handleSubmit(e) {
     e.preventDefault();
 
+    const nombreEspecialidad = document.getElementById('form-nombre-especialidad').value.trim();
+
+    if (!nombreEspecialidad) {
+        showToast('Por favor ingresa un nombre de especialidad', 'error');
+        return;
+    }
+
     const formData = {
-        id_especialidad: parseInt(document.getElementById('form-especialidad').value),
-        activo: document.getElementById('form-activo').checked ? 1 : 0,
-        tipo_seccion: document.getElementById('form-tipo-seccion').value,
+        nombre_especialidad: nombreEspecialidad,
+        activo: 1, // Siempre activo
+        tipo_seccion: 'consulta', // Siempre consulta en la pestaña de especialidades
         tiene_opciones: document.getElementById('form-tiene-opciones').checked ? 1 : 0,
         mostrar_en_kiosco: 1,
         orden: 0,
@@ -391,6 +467,8 @@ async function handleSubmit(e) {
             formData.precio_club_fijo = parseFloat(document.getElementById('form-precio-club').value) || null;
         }
     }
+
+    console.log('📤 Enviando datos:', formData);
 
     try {
         const url = state.editingId
@@ -412,6 +490,7 @@ async function handleSubmit(e) {
         });
 
         const data = await response.json();
+        console.log('📥 Respuesta del servidor:', data);
 
         if (data.success) {
             showToast(state.editingId ? 'Especialidad actualizada' : 'Especialidad creada', 'success');
@@ -419,6 +498,7 @@ async function handleSubmit(e) {
             await loadData();
         } else {
             showToast(data.error || 'Error al guardar', 'error');
+            console.error('❌ Error del servidor:', data.error);
         }
     } catch (error) {
         console.error('Error:', error);
@@ -438,19 +518,40 @@ async function toggleActive(id, newStatus) {
     try {
         const esp = state.especialidades.find(e => e.id === id);
 
+        // Construir objeto con TODOS los datos para no perder información
+        const updateData = {
+            id: id,
+            nombre_especialidad: esp.nombre_especialidad,
+            activo: newStatus ? 1 : 0,
+            orden: esp.orden || 0,
+            tiene_opciones: esp.tiene_opciones ? 1 : 0,
+            tipo_seccion: esp.tipo_seccion || 'consulta',
+            mostrar_en_kiosco: 1,
+            imagen_personalizada: esp.imagen_personalizada || null
+        };
+
+        // Agregar configuración de precios si existe
+        if (!esp.tiene_opciones) {
+            updateData.tipo_precio = esp.tipo_precio || 'id_bd';
+
+            if (esp.tipo_precio === 'id_bd') {
+                updateData.id_servicio_particular = esp.id_servicio_particular || null;
+                updateData.id_servicio_club = esp.id_servicio_club || null;
+                updateData.tabla_origen = esp.tabla_origen || 'servicio';
+            } else {
+                updateData.precio_particular_fijo = esp.precio_particular_fijo || null;
+                updateData.precio_club_fijo = esp.precio_club_fijo || null;
+            }
+        }
+
+        console.log('📤 Actualizando estado (preservando datos):', updateData);
+
         const response = await fetch(`${API_BASE}/especialidades_config.php`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({
-                id: id,
-                activo: newStatus ? 1 : 0,
-                orden: esp.orden,
-                tiene_opciones: esp.tiene_opciones ? 1 : 0,
-                tipo_seccion: esp.tipo_seccion,
-                mostrar_en_kiosco: 1
-            })
+            body: JSON.stringify(updateData)
         });
 
         const data = await response.json();
@@ -530,6 +631,8 @@ async function handleImageUpload(event) {
     const file = event.target.files[0];
     if (!file) return;
 
+    console.log('📸 Intentando subir imagen:', file.name, file.type, file.size);
+
     // Validar tamaño
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
@@ -552,12 +655,33 @@ async function handleImageUpload(event) {
         const formData = new FormData();
         formData.append('image', file);
 
+        console.log('📤 Enviando imagen al servidor...');
+
         const response = await fetch(`${API_BASE}/upload_image.php`, {
             method: 'POST',
             body: formData
         });
 
-        const data = await response.json();
+        console.log('📥 Respuesta HTTP:', response.status, response.statusText);
+
+        // Primero obtener el texto de la respuesta
+        const responseText = await response.text();
+        console.log('📥 Respuesta RAW del servidor:', responseText.substring(0, 500));
+
+        // Intentar parsear como JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+            console.log('📥 Datos de respuesta (JSON):', data);
+        } catch (e) {
+            console.error('❌ ERROR: El servidor devolvió HTML en lugar de JSON');
+            console.error('HTML completo:', responseText);
+            showToast('Error del servidor. Revisa la consola (F12)', 'error');
+            document.getElementById('upload-button-container').classList.remove('hidden');
+            document.getElementById('upload-loading').classList.add('hidden');
+            event.target.value = '';
+            return;
+        }
 
         if (data.success) {
             // Guardar path en campo oculto
@@ -572,7 +696,7 @@ async function handleImageUpload(event) {
             document.getElementById('upload-button-container').classList.remove('hidden');
         }
     } catch (error) {
-        console.error('Error uploading image:', error);
+        console.error('❌ Error uploading image:', error);
         showToast('Error al subir imagen', 'error');
         document.getElementById('upload-button-container').classList.remove('hidden');
     } finally {

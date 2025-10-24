@@ -30,7 +30,14 @@ $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
 
 // Crear directorio si no existe
 if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0755, true);
+    if (!mkdir($uploadDir, 0777, true)) {
+        throw new Exception('No se pudo crear el directorio de uploads. Verifica permisos del servidor.');
+    }
+}
+
+// Verificar permisos de escritura
+if (!is_writable($uploadDir)) {
+    throw new Exception('El directorio de uploads no tiene permisos de escritura. Path: ' . $uploadDir);
 }
 
 try {
@@ -77,12 +84,16 @@ try {
     }
 
     // Opcional: Redimensionar imagen para optimización
+    // DESHABILITADO: Requiere extensión GD de PHP
+    // Para habilitar: Activa extension=gd en php.ini y reinicia Apache
+    /*
     try {
         resizeImage($filepath, 400, 400);
     } catch (Exception $e) {
         // Si falla el redimensionamiento, continuar con la imagen original
         error_log('Error al redimensionar: ' . $e->getMessage());
     }
+    */
 
     echo json_encode([
         'success' => true,
