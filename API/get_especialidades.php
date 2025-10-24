@@ -356,7 +356,7 @@ try {
     }
 
     // 5. Obtener todas las especialidades ACTIVAS según configuración del dashboard
-    $sql = "SELECT e.idEspecialidad, e.descEspecialidad
+    $sql = "SELECT e.idEspecialidad, e.descEspecialidad, k.imagen_personalizada
             FROM especialidad e
             INNER JOIN kiosk_especialidad_config k ON e.idEspecialidad = k.id_especialidad
             WHERE e.idDispensario = ?
