@@ -4,14 +4,17 @@ Test directo de la API de Claude
 Para verificar si la API key funciona
 """
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
 print("="*60)
 print("TEST DIRECTO DE CLAUDE")
 print("="*60)
 
-# Cargar .env
-load_dotenv()
+# Cargar .env desde el directorio actual (multi_agent_system/)
+env_path = Path(__file__).parent / '.env'
+load_dotenv(env_path)
+print(f"\nCargando .env desde: {env_path}")
 
 api_key = os.getenv("ANTHROPIC_API_KEY")
 
