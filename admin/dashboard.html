@@ -17,29 +17,39 @@
     <style>
         .specialty-card {
             transition: all 0.3s ease;
-            cursor: grab;
         }
         .specialty-card:hover {
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
         }
-        .specialty-card:active {
-            cursor: grabbing;
-        }
-        .sortable-ghost {
-            opacity: 0.4;
-            background: #e5e7eb;
-        }
-        .sortable-drag {
-            cursor: grabbing;
-            transform: rotate(3deg);
-        }
         .drag-handle {
-            cursor: grab;
+            cursor: grab !important;
             touch-action: none;
+            padding: 8px;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+        .drag-handle:hover {
+            background-color: #f3f4f6;
+            border-radius: 4px;
         }
         .drag-handle:active {
-            cursor: grabbing;
+            cursor: grabbing !important;
+        }
+        .sortable-ghost {
+            opacity: 0.3 !important;
+            background: #dbeafe !important;
+            border: 2px dashed #3b82f6 !important;
+        }
+        .sortable-chosen {
+            opacity: 0.8;
+        }
+        .sortable-drag {
+            cursor: grabbing !important;
+            opacity: 1;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2) !important;
         }
         .modal {
             display: none;

@@ -163,16 +163,36 @@ function initSortable() {
         sortableInstance.destroy();
     }
 
+    // Solo inicializar si hay elementos
+    const items = container.querySelectorAll('.specialty-card');
+    if (items.length === 0) {
+        return;
+    }
+
     // Crear nueva instancia de Sortable
     sortableInstance = Sortable.create(container, {
-        animation: 150,
+        animation: 200,
         handle: '.drag-handle',
         ghostClass: 'sortable-ghost',
+        chosenClass: 'sortable-chosen',
         dragClass: 'sortable-drag',
+        forceFallback: true,
+        fallbackTolerance: 3,
+        touchStartThreshold: 5,
+        delay: 0,
+        delayOnTouchOnly: false,
+        onStart: function(evt) {
+            console.log('Drag started', evt.item);
+        },
         onEnd: async (evt) => {
-            await saveNewOrder();
+            console.log('Drag ended', evt.oldIndex, '->', evt.newIndex);
+            if (evt.oldIndex !== evt.newIndex) {
+                await saveNewOrder();
+            }
         }
     });
+
+    console.log('SortableJS initialized with', items.length, 'items');
 }
 
 async function saveNewOrder() {
@@ -236,8 +256,8 @@ function createEspecialidadCard(esp) {
     return `
         <div class="specialty-card bg-white rounded-lg shadow hover:shadow-xl p-6" data-id="${esp.id}">
             <!-- Drag Handle -->
-            <div class="drag-handle flex justify-center mb-2 -mt-2">
-                <i class="fas fa-grip-horizontal text-gray-400 text-lg"></i>
+            <div class="drag-handle flex justify-center items-center mb-3 -mt-3" title="Arrastrar para reordenar">
+                <i class="fas fa-grip-vertical text-gray-400 hover:text-blue-600 text-2xl"></i>
             </div>
 
             <!-- Header con imagen -->
