@@ -443,11 +443,13 @@ function loadFormData(id) {
 
 async function cargarOpciones(especialidadId) {
     try {
-        const response = await fetch(`${API_BASE}/especialidades_config.php?id=${especialidadId}&with_opciones=1`);
+        const response = await fetch(`${API_BASE}/especialidades_config.php?id=${especialidadId}`);
         const data = await response.json();
 
-        if (data.success && data.opciones) {
-            state.opciones = data.opciones.map(opc => ({
+        console.log('📥 Respuesta de opciones:', data);
+
+        if (data.success && data.data && data.data.opciones) {
+            state.opciones = data.data.opciones.map(opc => ({
                 id: opc.id,
                 nombre: opc.nombre_opcion,
                 tipo_precio: opc.tipo_precio,
@@ -458,13 +460,15 @@ async function cargarOpciones(especialidadId) {
                 tabla_origen: opc.tabla_origen || 'servicio',
                 orden: opc.orden
             }));
+            console.log('✅ Opciones cargadas:', state.opciones);
             renderizarOpciones();
         } else {
+            console.log('⚠️ No hay opciones para esta especialidad');
             state.opciones = [];
             renderizarOpciones();
         }
     } catch (error) {
-        console.error('Error cargando opciones:', error);
+        console.error('❌ Error cargando opciones:', error);
         state.opciones = [];
         renderizarOpciones();
     }
@@ -936,3 +940,13 @@ function actualizarOpcion(opcionId, campo, valor) {
 
     console.log('Opción actualizada:', opcion);
 }
+
+// =============================================================================
+// EXPONER FUNCIONES GLOBALES (para onclick en HTML)
+// =============================================================================
+
+window.agregarOpcion = agregarOpcion;
+window.eliminarOpcion = eliminarOpcion;
+window.actualizarOpcion = actualizarOpcion;
+window.removeImage = removeImage;
+window.handleImageUpload = handleImageUpload;
