@@ -956,13 +956,13 @@ window.handleImageUpload = handleImageUpload;
 // =============================================================================
 
 const DashboardExamenes = {
-    examenes: [],
-    filtroActual: 'todos',
+    categorias: [],
+    filtroActual: 'laboratorio', // Cambiar default a laboratorio
     examenEditando: null,
 
     // Inicializar el módulo de exámenes
     async init() {
-        await this.cargarExamenes();
+        await this.cargarExamenes('laboratorio'); // Cargar laboratorio por defecto
         this.setupEventListeners();
     },
 
@@ -978,13 +978,13 @@ const DashboardExamenes = {
     },
 
     // Cargar exámenes desde la API
-    async cargarExamenes(tipo = 'todos') {
+    async cargarExamenes(tipo = 'laboratorio') {
         try {
             const response = await fetch(`api/examenes_config.php?tipo=${tipo}`);
             const data = await response.json();
 
             if (data.success) {
-                this.examenes = data.data;
+                this.categorias = data.categorias || [];
                 this.renderizarExamenes();
             } else {
                 throw new Error(data.error || 'Error al cargar exámenes');
