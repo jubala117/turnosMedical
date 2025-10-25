@@ -999,6 +999,7 @@ const DashboardExamenes = {
     renderizarExamenes() {
         const grid = document.getElementById('examenes-grid');
         const empty = document.getElementById('examenes-empty');
+        const importNotice = document.getElementById('import-notice');
 
         // Filtrar exámenes según el filtro actual
         let examenesFiltrados = this.examenes;
@@ -1008,16 +1009,24 @@ const DashboardExamenes = {
             examenesFiltrados = this.examenes.filter(e => e.id_config == 23);
         }
 
-        if (examenesFiltrados.length === 0) {
+        // Mostrar/ocultar aviso de importación
+        if (examenesFiltrados.length === 0 && this.filtroActual === 'laboratorio') {
+            // Mostrar aviso de importación solo para laboratorio vacío
+            importNotice.classList.remove('hidden');
+            empty.classList.add('hidden');
+            grid.classList.add('hidden');
+        } else if (examenesFiltrados.length === 0) {
+            // Mostrar empty state para otros casos
+            importNotice.classList.add('hidden');
             grid.classList.add('hidden');
             empty.classList.remove('hidden');
-            return;
+        } else {
+            // Mostrar exámenes
+            importNotice.classList.add('hidden');
+            empty.classList.add('hidden');
+            grid.classList.remove('hidden');
+            grid.innerHTML = examenesFiltrados.map(examen => this.crearTarjetaExamen(examen)).join('');
         }
-
-        grid.classList.remove('hidden');
-        empty.classList.add('hidden');
-
-        grid.innerHTML = examenesFiltrados.map(examen => this.crearTarjetaExamen(examen)).join('');
     },
 
     // Crear HTML de tarjeta de examen
@@ -1247,6 +1256,43 @@ const DashboardExamenes = {
         document.getElementById('examen-modal').classList.remove('active');
         document.getElementById('examen-form').reset();
         this.examenEditando = null;
+    },
+
+    // Importar exámenes desde mapeo hardcodeado
+    async importarExamenes() {
+        if (!confirm('¿Deseas importar los exámenes de laboratorio? Esto creará ~150 exámenes organizados en 13 categorías.')) {
+            return;
+        }
+
+        try {
+            showToast('Importando exámenes... Esto puede tomar unos segundos', 'info');
+
+            const response = await fetch('api/importar_examenes.php', {
+                method: 'POST'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast(`¡Importación exitosa! ${result.total_examenes} exámenes en ${result.total_categorias} categorías`, 'success');
+
+                // Recargar exámenes
+                await this.cargarExamenes('laboratorio');
+
+                // Ocultar aviso de importación
+                document.getElementById('import-notice').classList.add('hidden');
+            } else {
+                throw new Error(result.error || 'Error en la importación');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al importar exámenes: ' + error.message, 'error');
+        }
+    },
+
+    // Ocultar aviso de importación
+    ocultarAvisoImportacion() {
+        document.getElementById('import-notice').classList.add('hidden');
     }
 };
 
