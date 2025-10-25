@@ -61,39 +61,54 @@ function handleGet($conn) {
 }
 
 function getAllExamenes($conn, $tipo) {
-    $sql = "SELECT
-                kie.id,
-                kie.id_categoria,
-                kce.nombre_categoria,
-                kie.id_config,
-                kie.nombre,
-                kie.descripcion,
-                kie.precio_particular,
-                kie.precio_club,
-                kie.orden,
-                kie.activo,
-                kie.fecha_actualizacion,
-                kec.tipo_seccion
-            FROM kiosk_item_examen kie
-            LEFT JOIN kiosk_categoria_examenes kce ON kce.id = kie.id_categoria
-            LEFT JOIN kiosk_especialidad_config kec ON kec.id = kie.id_config";
-
-    // Filtrar por tipo si se especifica
+    // Determinar id_config según el tipo
+    $idConfig = null;
     if ($tipo === 'laboratorio') {
-        $sql .= " WHERE kec.tipo_seccion = 'examen_lista' AND kec.id_especialidad = 21";
+        $idConfig = 21;
     } elseif ($tipo === 'imagen') {
-        $sql .= " WHERE kec.tipo_seccion = 'examen_lista' AND kec.id_especialidad = 23";
+        $idConfig = 23;
     }
 
-    $sql .= " ORDER BY kec.id_especialidad, kie.orden, kie.nombre";
+    // Obtener categorías
+    $sqlCategorias = "SELECT id, nombre_categoria, orden, activo
+                      FROM kiosk_categoria_examenes
+                      WHERE id_config = (SELECT id FROM kiosk_especialidad_config WHERE id_especialidad = ?)
+                      ORDER BY orden, nombre_categoria";
 
-    $stmt = $conn->prepare($sql);
-    $stmt->execute();
-    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $stmtCat = $conn->prepare($sqlCategorias);
+    $stmtCat->execute([$idConfig]);
+    $categorias = $stmtCat->fetchAll(PDO::FETCH_ASSOC);
+
+    // Obtener exámenes
+    $sqlExamenes = "SELECT id, id_categoria, nombre, descripcion, precio_particular, precio_club, orden, activo, fecha_actualizacion
+                    FROM kiosk_item_examen
+                    WHERE id_config = (SELECT id FROM kiosk_especialidad_config WHERE id_especialidad = ?)
+                    ORDER BY id_categoria, orden, nombre";
+
+    $stmtExam = $conn->prepare($sqlExamenes);
+    $stmtExam->execute([$idConfig]);
+    $examenes = $stmtExam->fetchAll(PDO::FETCH_ASSOC);
+
+    // Agrupar exámenes por categoría
+    $categoriasConExamenes = [];
+    foreach ($categorias as $categoria) {
+        $examenesDeCategoria = array_filter($examenes, function($examen) use ($categoria) {
+            return $examen['id_categoria'] == $categoria['id'];
+        });
+
+        $categoriasConExamenes[] = [
+            'id' => $categoria['id'],
+            'nombre' => $categoria['nombre_categoria'],
+            'orden' => $categoria['orden'],
+            'activo' => $categoria['activo'],
+            'examenes' => array_values($examenesDeCategoria)
+        ];
+    }
 
     echo json_encode([
         'success' => true,
-        'data' => $result
+        'categorias' => $categoriasConExamenes,
+        'id_config' => $idConfig
     ]);
 }
 

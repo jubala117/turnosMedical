@@ -10,19 +10,16 @@ header("Content-Type: application/json; charset=UTF-8");
 require_once(__DIR__ . '/../../db_connect.inc.php');
 
 try {
-    // Verificar si ya hay datos importados
-    $sqlCheck = "SELECT COUNT(*) FROM kiosk_item_examen WHERE id_config = 21";
-    $stmtCheck = $conn->prepare($sqlCheck);
-    $stmtCheck->execute();
-    $yaExisten = $stmtCheck->fetchColumn();
+    // LIMPIAR DATOS EXISTENTES PRIMERO
+    // Eliminar todos los exámenes de laboratorio
+    $sqlDeleteExamenes = "DELETE FROM kiosk_item_examen WHERE id_config = (SELECT id FROM kiosk_especialidad_config WHERE id_especialidad = 21)";
+    $stmtDeleteExamenes = $conn->prepare($sqlDeleteExamenes);
+    $stmtDeleteExamenes->execute();
 
-    if ($yaExisten > 0) {
-        echo json_encode([
-            'success' => false,
-            'error' => 'Ya existen exámenes de laboratorio importados. Total: ' . $yaExisten
-        ]);
-        exit;
-    }
+    // Eliminar todas las categorías de laboratorio
+    $sqlDeleteCat = "DELETE FROM kiosk_categoria_examenes WHERE id_config = (SELECT id FROM kiosk_especialidad_config WHERE id_especialidad = 21)";
+    $stmtDeleteCat = $conn->prepare($sqlDeleteCat);
+    $stmtDeleteCat->execute();
 
     // =========================================================================
     // LABORATORIO - Crear categorías e importar exámenes
