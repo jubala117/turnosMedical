@@ -130,19 +130,29 @@ class BaseAgent(ABC):
         # Ejecutar cada herramienta
         tool_results = []
         for tool_call in tool_calls:
-            tool_name = tool_call["name"]
-            tool_args = tool_call["arguments"]
+            # Validar que tool_call tenga los campos necesarios
+            if not isinstance(tool_call, dict):
+                print(f"⚠️ Warning: tool_call no es un dict: {tool_call}")
+                continue
+            
+            tool_name = tool_call.get("name")
+            tool_args = tool_call.get("arguments", {})
+            tool_id = tool_call.get("id", "unknown")
+
+            if not tool_name:
+                print(f"⚠️ Warning: tool_call sin 'name': {tool_call}")
+                continue
 
             try:
                 result = self.tool_registry.execute(tool_name, **tool_args)
                 tool_results.append({
-                    "tool_call_id": tool_call["id"],
+                    "tool_call_id": tool_id,
                     "tool_name": tool_name,
                     "result": str(result)
                 })
             except Exception as e:
                 tool_results.append({
-                    "tool_call_id": tool_call["id"],
+                    "tool_call_id": tool_id,
                     "tool_name": tool_name,
                     "result": f"Error: {str(e)}"
                 })

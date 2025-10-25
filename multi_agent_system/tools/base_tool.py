@@ -52,6 +52,14 @@ class BaseTool(ABC):
                 "parameters": schema
             }
         }
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Retorna representación en dict con todos los campos"""
+        return {
+            "name": self.name,
+            "description": self.description,
+            "input_schema": self.get_schema()
+        }
 
 
 class ToolRegistry:

@@ -26,13 +26,14 @@ class DelegateToAgentTool(BaseTool):
         )
         self.orchestrator = orchestrator
 
-    def execute(self, agent_type: str, task: str) -> str:
+    def execute(self, agent_type: str, task: str, **kwargs) -> str:
         """
         Ejecuta una tarea con un agente especializado.
 
         Args:
             agent_type: Tipo de agente ("code", "research", "database")
             task: Descripción de la tarea
+            **kwargs: Parámetros adicionales (ignorados, para compatibilidad)
 
         Returns:
             Resultado de la tarea
