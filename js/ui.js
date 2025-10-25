@@ -402,28 +402,29 @@ class UIManager {
         modalOverlay.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4';
         modalOverlay.id = 'modal-opciones-especialidad';
 
-        // Crear contenido del modal
+        // Crear contenido del modal - IGUAL QUE DEUNA
         const modalContent = document.createElement('div');
-        modalContent.className = 'bg-white rounded-lg shadow-xl max-w-2xl w-full';
-        modalContent.style.maxHeight = '90vh';
+        modalContent.className = 'bg-white rounded-2xl shadow-2xl w-full';
+        modalContent.style.maxWidth = '600px';
+        modalContent.style.maxHeight = '85vh';
         modalContent.style.display = 'flex';
         modalContent.style.flexDirection = 'column';
 
-        // Header del modal (fijo)
+        // Header del modal (fijo) - IGUAL QUE DEUNA
         const modalHeader = document.createElement('div');
-        modalHeader.className = 'bg-blue-600 text-white p-6 rounded-t-lg';
+        modalHeader.className = 'p-6 text-center bg-blue-600 text-white rounded-t-2xl';
         modalHeader.style.flexShrink = '0';
         modalHeader.innerHTML = `
             <h2 class="text-2xl font-bold">${especialidad.descEspecialidad}</h2>
             <p class="text-blue-100 mt-2">Selecciona una opción para continuar</p>
         `;
 
-        // Body del modal con opciones (scrollable)
+        // Body del modal con opciones (scrollable) - IGUAL QUE DEUNA
         const modalBody = document.createElement('div');
-        modalBody.className = 'p-6 space-y-4';
+        modalBody.className = 'px-6 py-4 space-y-4';
+        modalBody.style.flex = '1 1 auto';
         modalBody.style.overflowY = 'auto';
-        modalBody.style.flex = '1';
-        modalBody.style.minHeight = '0'; // Fix para que flex funcione correctamente
+        modalBody.style.minHeight = '0';
 
         opciones.forEach((opcion, index) => {
             const opcionCard = document.createElement('div');
@@ -480,9 +481,10 @@ class UIManager {
             modalBody.appendChild(opcionCard);
         });
 
-        // Footer del modal (fijo)
+        // Footer del modal (fijo) - IGUAL QUE DEUNA
         const modalFooter = document.createElement('div');
-        modalFooter.className = 'bg-gray-50 p-4 rounded-b-lg border-t border-gray-200 flex-shrink-0';
+        modalFooter.className = 'bg-gray-50 p-4 rounded-b-2xl border-t border-gray-200';
+        modalFooter.style.flexShrink = '0';
         const btnCancelar = document.createElement('button');
         btnCancelar.className = 'w-full py-3 px-4 border-2 border-red-600 bg-white hover:bg-red-50 text-red-600 rounded-lg font-bold transition-colors shadow-md';
         btnCancelar.innerHTML = '✖ Cancelar';
