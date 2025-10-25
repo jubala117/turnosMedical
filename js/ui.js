@@ -404,19 +404,19 @@ class UIManager {
 
         // Crear contenido del modal
         const modalContent = document.createElement('div');
-        modalContent.className = 'bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] overflow-y-auto';
+        modalContent.className = 'bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col';
 
-        // Header del modal
+        // Header del modal (fijo)
         const modalHeader = document.createElement('div');
-        modalHeader.className = 'bg-blue-600 text-white p-6 rounded-t-lg';
+        modalHeader.className = 'bg-blue-600 text-white p-6 rounded-t-lg flex-shrink-0';
         modalHeader.innerHTML = `
             <h2 class="text-2xl font-bold">${especialidad.descEspecialidad}</h2>
             <p class="text-blue-100 mt-2">Selecciona una opción para continuar</p>
         `;
 
-        // Body del modal con opciones
+        // Body del modal con opciones (scrollable)
         const modalBody = document.createElement('div');
-        modalBody.className = 'p-6 space-y-4';
+        modalBody.className = 'p-6 space-y-4 overflow-y-auto flex-1';
 
         opciones.forEach((opcion, index) => {
             const opcionCard = document.createElement('div');
@@ -473,9 +473,9 @@ class UIManager {
             modalBody.appendChild(opcionCard);
         });
 
-        // Footer del modal
+        // Footer del modal (fijo)
         const modalFooter = document.createElement('div');
-        modalFooter.className = 'bg-gray-50 p-4 rounded-b-lg border-t border-gray-200';
+        modalFooter.className = 'bg-gray-50 p-4 rounded-b-lg border-t border-gray-200 flex-shrink-0';
         const btnCancelar = document.createElement('button');
         btnCancelar.className = 'w-full py-3 px-4 border-2 border-red-600 bg-white hover:bg-red-50 text-red-600 rounded-lg font-bold transition-colors shadow-md';
         btnCancelar.innerHTML = '✖ Cancelar';
