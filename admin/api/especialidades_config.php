@@ -261,6 +261,11 @@ function handlePut($conn) {
 
         // Actualizar precio si no tiene opciones
         if (!($data['tiene_opciones'] ?? false)) {
+            // Eliminar opciones viejas si existían
+            $sqlDeleteOpciones = "DELETE FROM kiosk_precio_opciones WHERE id_config = ?";
+            $stmtDeleteOpciones = $conn->prepare($sqlDeleteOpciones);
+            $stmtDeleteOpciones->execute([$data['id']]);
+
             $sqlPrecio = "UPDATE kiosk_precio_config
                          SET tipo_precio = ?,
                              id_servicio_particular = ?,
@@ -280,6 +285,15 @@ function handlePut($conn) {
                 $data['tabla_origen'] ?? 'servicio',
                 $data['id']
             ]);
+        } else {
+            // Si tiene opciones, eliminar las viejas e insertar las nuevas
+            $sqlDeleteOpciones = "DELETE FROM kiosk_precio_opciones WHERE id_config = ?";
+            $stmtDeleteOpciones = $conn->prepare($sqlDeleteOpciones);
+            $stmtDeleteOpciones->execute([$data['id']]);
+
+            if (isset($data['opciones']) && is_array($data['opciones'])) {
+                insertOpciones($conn, $data['id'], $data['opciones']);
+            }
         }
 
         $conn->commit();

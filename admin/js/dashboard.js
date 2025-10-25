@@ -11,7 +11,8 @@ const state = {
     currentFilter: 'all',
     currentTipo: 'all',
     searchTerm: '',
-    editingId: null
+    editingId: null,
+    opciones: [] // Opciones para la especialidad actual
 };
 
 // =============================================================================
@@ -389,6 +390,8 @@ function openModal(mode, id = null) {
         document.getElementById('specialty-form').reset();
         document.getElementById('form-nombre-especialidad').value = '';
         hideImagePreview(); // Limpiar preview de imagen
+        state.opciones = []; // Limpiar opciones
+        renderizarOpciones();
     } else if (mode === 'edit') {
         title.textContent = 'Editar Especialidad';
         loadFormData(id);
@@ -428,11 +431,43 @@ function loadFormData(id) {
             document.getElementById('form-precio-particular').value = esp.precio_particular_fijo || '';
             document.getElementById('form-precio-club').value = esp.precio_club_fijo || '';
         }
+    } else {
+        // Cargar opciones desde el backend
+        cargarOpciones(esp.id);
     }
 
     // Trigger change events
     document.getElementById('form-tipo-precio').dispatchEvent(new Event('change'));
     document.getElementById('form-tiene-opciones').dispatchEvent(new Event('change'));
+}
+
+async function cargarOpciones(especialidadId) {
+    try {
+        const response = await fetch(`${API_BASE}/especialidades_config.php?id=${especialidadId}&with_opciones=1`);
+        const data = await response.json();
+
+        if (data.success && data.opciones) {
+            state.opciones = data.opciones.map(opc => ({
+                id: opc.id,
+                nombre: opc.nombre_opcion,
+                tipo_precio: opc.tipo_precio,
+                id_servicio_particular: opc.id_servicio_particular,
+                id_servicio_club: opc.id_servicio_club,
+                precio_particular_fijo: opc.precio_particular_fijo,
+                precio_club_fijo: opc.precio_club_fijo,
+                tabla_origen: opc.tabla_origen || 'servicio',
+                orden: opc.orden
+            }));
+            renderizarOpciones();
+        } else {
+            state.opciones = [];
+            renderizarOpciones();
+        }
+    } catch (error) {
+        console.error('Error cargando opciones:', error);
+        state.opciones = [];
+        renderizarOpciones();
+    }
 }
 
 async function handleSubmit(e) {
@@ -466,6 +501,31 @@ async function handleSubmit(e) {
             formData.precio_particular_fijo = parseFloat(document.getElementById('form-precio-particular').value) || null;
             formData.precio_club_fijo = parseFloat(document.getElementById('form-precio-club').value) || null;
         }
+    } else {
+        // Validar que haya al menos una opción
+        if (state.opciones.length === 0) {
+            showToast('Debes agregar al menos una opción', 'error');
+            return;
+        }
+
+        // Validar que todas las opciones tengan nombre
+        const opcionesSinNombre = state.opciones.filter(o => !o.nombre || o.nombre.trim() === '');
+        if (opcionesSinNombre.length > 0) {
+            showToast('Todas las opciones deben tener un nombre', 'error');
+            return;
+        }
+
+        // Agregar opciones al formData
+        formData.opciones = state.opciones.map((opc, index) => ({
+            nombre_opcion: opc.nombre.trim(), // Nombre para el backend
+            tipo_precio: opc.tipo_precio,
+            id_servicio_particular: opc.id_servicio_particular,
+            id_servicio_club: opc.id_servicio_club,
+            precio_particular_fijo: opc.precio_particular_fijo,
+            precio_club_fijo: opc.precio_club_fijo,
+            tabla_origen: opc.tabla_origen || 'servicio',
+            orden: index
+        }));
     }
 
     console.log('📤 Enviando datos:', formData);
@@ -732,4 +792,147 @@ function removeImage() {
         hideImagePreview();
         showToast('Imagen eliminada', 'success');
     }
+}
+
+// =============================================================================
+// GESTIÓN DE OPCIONES MÚLTIPLES
+// =============================================================================
+
+function agregarOpcion() {
+    const opcion = {
+        id: Date.now(), // ID temporal único
+        nombre: '',
+        tipo_precio: 'id_bd',
+        id_servicio_particular: null,
+        id_servicio_club: null,
+        precio_particular_fijo: null,
+        precio_club_fijo: null,
+        tabla_origen: 'servicio',
+        orden: state.opciones.length
+    };
+
+    state.opciones.push(opcion);
+    renderizarOpciones();
+}
+
+function eliminarOpcion(opcionId) {
+    if (!confirm('¿Eliminar esta opción?')) {
+        return;
+    }
+
+    state.opciones = state.opciones.filter(o => o.id !== opcionId);
+    renderizarOpciones();
+    showToast('Opción eliminada', 'success');
+}
+
+function renderizarOpciones() {
+    const lista = document.getElementById('opciones-lista');
+    const vacio = document.getElementById('opciones-vacio');
+
+    if (state.opciones.length === 0) {
+        lista.classList.add('hidden');
+        vacio.classList.remove('hidden');
+        return;
+    }
+
+    lista.classList.remove('hidden');
+    vacio.classList.add('hidden');
+
+    lista.innerHTML = state.opciones.map((opcion, index) => crearHTMLOpcion(opcion, index)).join('');
+}
+
+function crearHTMLOpcion(opcion, index) {
+    const esIdBd = opcion.tipo_precio === 'id_bd';
+
+    return `
+        <div class="border border-gray-300 rounded-lg p-4 bg-gray-50" data-opcion-id="${opcion.id}">
+            <div class="flex justify-between items-start mb-4">
+                <h5 class="text-md font-bold text-gray-800">Opción ${index + 1}</h5>
+                <button type="button" onclick="eliminarOpcion(${opcion.id})" class="text-red-600 hover:text-red-700 text-sm">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+
+            <!-- Nombre de la Opción -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Nombre de la Opción</label>
+                <input
+                    type="text"
+                    value="${opcion.nombre || ''}"
+                    onchange="actualizarOpcion(${opcion.id}, 'nombre', this.value)"
+                    placeholder="Ej: Una Hora, Consulta + PAP, etc."
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required>
+            </div>
+
+            <!-- Tipo de Precio -->
+            <div class="mb-4">
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo de Precio</label>
+                <select
+                    onchange="actualizarOpcion(${opcion.id}, 'tipo_precio', this.value)"
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <option value="id_bd" ${esIdBd ? 'selected' : ''}>Desde Base de Datos (ID)</option>
+                    <option value="fijo" ${!esIdBd ? 'selected' : ''}>Precio Fijo</option>
+                </select>
+            </div>
+
+            <!-- Precios por ID de BD -->
+            <div class="grid grid-cols-2 gap-4 ${esIdBd ? '' : 'hidden'}" id="opcion-${opcion.id}-id">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">ID Servicio Particular</label>
+                    <input
+                        type="number"
+                        value="${opcion.id_servicio_particular || ''}"
+                        onchange="actualizarOpcion(${opcion.id}, 'id_servicio_particular', parseInt(this.value) || null)"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">ID Servicio Club</label>
+                    <input
+                        type="number"
+                        value="${opcion.id_servicio_club || ''}"
+                        onchange="actualizarOpcion(${opcion.id}, 'id_servicio_club', parseInt(this.value) || null)"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <!-- Precios Fijos -->
+            <div class="grid grid-cols-2 gap-4 ${!esIdBd ? '' : 'hidden'}" id="opcion-${opcion.id}-fijo">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Precio Particular ($)</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        value="${opcion.precio_particular_fijo || ''}"
+                        onchange="actualizarOpcion(${opcion.id}, 'precio_particular_fijo', parseFloat(this.value) || null)"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Precio Club ($)</label>
+                    <input
+                        type="number"
+                        step="0.01"
+                        value="${opcion.precio_club_fijo || ''}"
+                        onchange="actualizarOpcion(${opcion.id}, 'precio_club_fijo', parseFloat(this.value) || null)"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function actualizarOpcion(opcionId, campo, valor) {
+    const opcion = state.opciones.find(o => o.id === opcionId);
+    if (!opcion) return;
+
+    opcion[campo] = valor;
+
+    // Si cambió el tipo de precio, re-renderizar para mostrar/ocultar campos
+    if (campo === 'tipo_precio') {
+        const esIdBd = valor === 'id_bd';
+        document.getElementById(`opcion-${opcionId}-id`).classList.toggle('hidden', !esIdBd);
+        document.getElementById(`opcion-${opcionId}-fijo`).classList.toggle('hidden', esIdBd);
+    }
+
+    console.log('Opción actualizada:', opcion);
 }
