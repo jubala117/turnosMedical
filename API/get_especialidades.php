@@ -385,8 +385,60 @@ try {
 
         // Si tiene configuración en el dashboard, usar esos precios
         if ($precioConfig) {
-            if ($precioConfig['tipo_precio'] === 'fijo') {
-                // Precios fijos configurados
+            // Verificar si tiene opciones múltiples
+            if ($precioConfig['tiene_opciones']) {
+                // Cargar opciones desde kiosk_precio_opciones
+                $sqlOpciones = "SELECT * FROM kiosk_precio_opciones WHERE id_config = (SELECT id FROM kiosk_especialidad_config WHERE id_especialidad = ?) AND activo = 1 ORDER BY orden";
+                $stmtOpciones = $conn->prepare($sqlOpciones);
+                $stmtOpciones->execute([$idEspecialidad]);
+                $opcionesRaw = $stmtOpciones->fetchAll(PDO::FETCH_ASSOC);
+
+                $especialidad['tieneOpciones'] = true;
+                $especialidad['opciones'] = [];
+
+                foreach ($opcionesRaw as $opcion) {
+                    $opcionData = [
+                        'nombre' => $opcion['nombre_opcion'],
+                        'esClubMedical' => $esClubMedical
+                    ];
+
+                    // Manejar precios fijos o por ID
+                    if ($opcion['tipo_precio'] === 'fijo') {
+                        $opcionData['particular'] = floatval($opcion['precio_particular_fijo']);
+                        $opcionData['clubMedical'] = floatval($opcion['precio_club_fijo']);
+                        $opcionData['idTipoServicioRegular'] = null;
+                        $opcionData['idTipoServicioClub'] = null;
+                    } else {
+                        // Buscar precios en la BD
+                        $precioRegularInfo = null;
+                        $precioClubInfo = null;
+
+                        if ($opcion['id_servicio_particular'] && isset($pricesById[$opcion['id_servicio_particular']])) {
+                            $precioRegularInfo = $pricesById[$opcion['id_servicio_particular']];
+                        }
+                        if ($opcion['id_servicio_club'] && isset($pricesById[$opcion['id_servicio_club']])) {
+                            $precioClubInfo = $pricesById[$opcion['id_servicio_club']];
+                        }
+
+                        $opcionData['particular'] = $precioRegularInfo ? floatval($precioRegularInfo['precio']) : null;
+                        $opcionData['clubMedical'] = $precioClubInfo ? floatval($precioClubInfo['precio']) : null;
+                        $opcionData['idTipoServicioRegular'] = $precioRegularInfo ? $precioRegularInfo['id'] : null;
+                        $opcionData['idTipoServicioClub'] = $precioClubInfo ? $precioClubInfo['id'] : null;
+                    }
+
+                    $especialidad['opciones'][] = $opcionData;
+                }
+
+                // Para compatibilidad, también incluir precios simples (de la primera opción)
+                $primeraOpcion = $especialidad['opciones'][0] ?? null;
+                $especialidad['precios'] = [
+                    'particular' => $primeraOpcion ? $primeraOpcion['particular'] : null,
+                    'clubMedical' => $primeraOpcion ? $primeraOpcion['clubMedical'] : null,
+                    'esClubMedical' => $esClubMedical,
+                    'tieneOpciones' => true
+                ];
+            } else if ($precioConfig['tipo_precio'] === 'fijo') {
+                // Precios fijos configurados (sin opciones)
                 $especialidad['precios'] = [
                     'particular' => floatval($precioConfig['precio_particular_fijo']),
                     'clubMedical' => floatval($precioConfig['precio_club_fijo']),
