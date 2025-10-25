@@ -6,6 +6,39 @@ require_once(__DIR__ . '/../db_connect.inc.php');
 require_once(__DIR__ . '/utils.php');
 
 try {
+    // PRIORIDAD 1: Intentar cargar exámenes desde configuración del dashboard
+    $examenes_resultado = [];
+
+    $sqlDashboard = "SELECT
+                        kie.nombre,
+                        kie.descripcion,
+                        kie.precio_particular,
+                        kie.precio_club
+                     FROM kiosk_item_examen kie
+                     WHERE kie.id_config = 23
+                       AND kie.activo = 1
+                     ORDER BY kie.orden, kie.nombre";
+
+    $stmtDashboard = $conn->prepare($sqlDashboard);
+    $stmtDashboard->execute();
+    $examenesDB = $stmtDashboard->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($examenesDB as $examen) {
+        $examenes_resultado[] = [
+            'descripcion' => $examen['nombre'],
+            'precio_particular' => floatval($examen['precio_particular']),
+            'precio_club' => floatval($examen['precio_club']),
+            'fuente' => 'dashboard'
+        ];
+    }
+
+    // Si hay exámenes configurados en el dashboard, usarlos
+    if (count($examenes_resultado) > 0) {
+        sendSuccess($examenes_resultado);
+        exit;
+    }
+
+    // PRIORIDAD 2: Si no hay exámenes en el dashboard, usar mapeo hardcodeado
     // Mapeo de nombres de exámenes a IDs de tipoexamenlab
     $mapeo_examenes = [
         'ECO ABDOMEN SUPERIOR' => [2545],

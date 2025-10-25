@@ -950,3 +950,317 @@ window.eliminarOpcion = eliminarOpcion;
 window.actualizarOpcion = actualizarOpcion;
 window.removeImage = removeImage;
 window.handleImageUpload = handleImageUpload;
+
+// =============================================================================
+// GESTIÓN DE EXÁMENES
+// =============================================================================
+
+const DashboardExamenes = {
+    examenes: [],
+    filtroActual: 'todos',
+    examenEditando: null,
+
+    // Inicializar el módulo de exámenes
+    async init() {
+        await this.cargarExamenes();
+        this.setupEventListeners();
+    },
+
+    // Configurar event listeners
+    setupEventListeners() {
+        const form = document.getElementById('examen-form');
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.guardarExamen();
+            });
+        }
+    },
+
+    // Cargar exámenes desde la API
+    async cargarExamenes(tipo = 'todos') {
+        try {
+            const response = await fetch(`api/examenes_config.php?tipo=${tipo}`);
+            const data = await response.json();
+
+            if (data.success) {
+                this.examenes = data.data;
+                this.renderizarExamenes();
+            } else {
+                throw new Error(data.error || 'Error al cargar exámenes');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error al cargar exámenes: ' + error.message, 'error');
+        }
+    },
+
+    // Renderizar lista de exámenes
+    renderizarExamenes() {
+        const grid = document.getElementById('examenes-grid');
+        const empty = document.getElementById('examenes-empty');
+
+        // Filtrar exámenes según el filtro actual
+        let examenesFiltrados = this.examenes;
+        if (this.filtroActual === 'laboratorio') {
+            examenesFiltrados = this.examenes.filter(e => e.id_config == 21);
+        } else if (this.filtroActual === 'imagen') {
+            examenesFiltrados = this.examenes.filter(e => e.id_config == 23);
+        }
+
+        if (examenesFiltrados.length === 0) {
+            grid.classList.add('hidden');
+            empty.classList.remove('hidden');
+            return;
+        }
+
+        grid.classList.remove('hidden');
+        empty.classList.add('hidden');
+
+        grid.innerHTML = examenesFiltrados.map(examen => this.crearTarjetaExamen(examen)).join('');
+    },
+
+    // Crear HTML de tarjeta de examen
+    crearTarjetaExamen(examen) {
+        const tipoIcono = examen.id_config == 21 ? 'fa-vial' : 'fa-x-ray';
+        const tipoColor = examen.id_config == 21 ? 'blue' : 'purple';
+        const tipoTexto = examen.id_config == 21 ? 'Laboratorio' : 'Imagenología';
+
+        return `
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
+                <!-- Header -->
+                <div class="bg-${tipoColor}-50 p-4 border-b border-${tipoColor}-100">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-2">
+                                <i class="fas ${tipoIcono} text-${tipoColor}-600"></i>
+                                <span class="text-xs font-semibold text-${tipoColor}-600 uppercase">${tipoTexto}</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-800 mb-1">${examen.nombre}</h3>
+                            ${examen.descripcion ? `<p class="text-sm text-gray-600">${examen.descripcion}</p>` : ''}
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="DashboardExamenes.toggleActivo(${examen.id})"
+                                    class="px-2 py-1 rounded-full text-xs font-semibold ${examen.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
+                                ${examen.activo ? 'Activo' : 'Inactivo'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Body -->
+                <div class="p-4">
+                    <!-- Precios -->
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="text-center p-3 bg-blue-50 rounded-lg">
+                            <p class="text-xs text-gray-600 mb-1">Particular</p>
+                            <p class="text-xl font-bold text-blue-600">$${parseFloat(examen.precio_particular).toFixed(2)}</p>
+                        </div>
+                        <div class="text-center p-3 bg-purple-50 rounded-lg">
+                            <p class="text-xs text-gray-600 mb-1">Club</p>
+                            <p class="text-xl font-bold text-purple-600">$${parseFloat(examen.precio_club).toFixed(2)}</p>
+                        </div>
+                    </div>
+
+                    <!-- Acciones -->
+                    <div class="flex space-x-2">
+                        <button onclick="DashboardExamenes.editarExamen(${examen.id})"
+                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
+                            <i class="fas fa-edit mr-1"></i>
+                            Editar
+                        </button>
+                        <button onclick="DashboardExamenes.eliminarExamen(${examen.id}, '${examen.nombre.replace(/'/g, "\\'")}')"
+                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-gray-50 px-4 py-2 border-t text-xs text-gray-500">
+                    Última actualización: ${new Date(examen.fecha_actualizacion).toLocaleDateString('es-ES')}
+                </div>
+            </div>
+        `;
+    },
+
+    // Filtrar por tipo
+    filtrarPorTipo(tipo) {
+        this.filtroActual = tipo;
+        this.renderizarExamenes();
+
+        // Actualizar botones de filtro
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            if (btn.dataset.tipo === tipo) {
+                btn.classList.remove('bg-gray-200', 'text-gray-700');
+                btn.classList.add('bg-blue-600', 'text-white');
+            } else {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('bg-gray-200', 'text-gray-700');
+            }
+        });
+    },
+
+    // Mostrar modal para nuevo examen
+    mostrarModalNuevo() {
+        this.examenEditando = null;
+        document.getElementById('examen-modal-title').textContent = 'Nuevo Examen';
+        document.getElementById('examen-form').reset();
+        document.getElementById('examen-form-id').value = '';
+        document.getElementById('examen-form-activo').checked = true;
+
+        // Pre-seleccionar tipo según filtro actual
+        if (this.filtroActual === 'laboratorio') {
+            document.getElementById('examen-form-tipo').value = '21';
+        } else if (this.filtroActual === 'imagen') {
+            document.getElementById('examen-form-tipo').value = '23';
+        }
+
+        document.getElementById('examen-modal').classList.add('active');
+    },
+
+    // Editar examen
+    async editarExamen(id) {
+        const examen = this.examenes.find(e => e.id === id);
+        if (!examen) return;
+
+        this.examenEditando = examen;
+        document.getElementById('examen-modal-title').textContent = 'Editar Examen';
+        document.getElementById('examen-form-id').value = examen.id;
+        document.getElementById('examen-form-tipo').value = examen.id_config;
+        document.getElementById('examen-form-config-id').value = examen.id_config;
+        document.getElementById('examen-form-nombre').value = examen.nombre;
+        document.getElementById('examen-form-descripcion').value = examen.descripcion || '';
+        document.getElementById('examen-form-precio-particular').value = examen.precio_particular;
+        document.getElementById('examen-form-precio-club').value = examen.precio_club;
+        document.getElementById('examen-form-activo').checked = examen.activo == 1;
+
+        document.getElementById('examen-modal').classList.add('active');
+    },
+
+    // Guardar examen (crear o actualizar)
+    async guardarExamen() {
+        const id = document.getElementById('examen-form-id').value;
+        const esNuevo = !id;
+
+        const data = {
+            id_config: document.getElementById('examen-form-tipo').value,
+            nombre: document.getElementById('examen-form-nombre').value,
+            descripcion: document.getElementById('examen-form-descripcion').value || null,
+            precio_particular: parseFloat(document.getElementById('examen-form-precio-particular').value),
+            precio_club: parseFloat(document.getElementById('examen-form-precio-club').value),
+            activo: document.getElementById('examen-form-activo').checked ? 1 : 0,
+        };
+
+        if (!esNuevo) {
+            data.id = parseInt(id);
+        }
+
+        try {
+            const url = 'api/examenes_config.php';
+            const method = esNuevo ? 'POST' : 'PUT';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast(esNuevo ? 'Examen creado exitosamente' : 'Examen actualizado exitosamente', 'success');
+                this.cerrarModal();
+                await this.cargarExamenes(this.filtroActual);
+            } else {
+                throw new Error(result.error || 'Error al guardar examen');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error: ' + error.message, 'error');
+        }
+    },
+
+    // Toggle estado activo/inactivo
+    async toggleActivo(id) {
+        const examen = this.examenes.find(e => e.id === id);
+        if (!examen) return;
+
+        const nuevoEstado = examen.activo == 1 ? 0 : 1;
+
+        try {
+            const response = await fetch('api/examenes_config.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: examen.id,
+                    nombre: examen.nombre,
+                    descripcion: examen.descripcion,
+                    precio_particular: examen.precio_particular,
+                    precio_club: examen.precio_club,
+                    activo: nuevoEstado,
+                    id_categoria: examen.id_categoria
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast(nuevoEstado ? 'Examen activado' : 'Examen desactivado', 'success');
+                await this.cargarExamenes(this.filtroActual);
+            } else {
+                throw new Error(result.error || 'Error al actualizar estado');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error: ' + error.message, 'error');
+        }
+    },
+
+    // Eliminar examen
+    async eliminarExamen(id, nombre) {
+        if (!confirm(`¿Estás seguro de que deseas eliminar el examen "${nombre}"?`)) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`api/examenes_config.php?id=${id}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('Examen eliminado exitosamente', 'success');
+                await this.cargarExamenes(this.filtroActual);
+            } else {
+                throw new Error(result.error || 'Error al eliminar examen');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error: ' + error.message, 'error');
+        }
+    },
+
+    // Cerrar modal
+    cerrarModal() {
+        document.getElementById('examen-modal').classList.remove('active');
+        document.getElementById('examen-form').reset();
+        this.examenEditando = null;
+    }
+};
+
+// Exponer DashboardExamenes globalmente
+window.DashboardExamenes = DashboardExamenes;
+
+// Inicializar cuando se cambia a la pestaña de exámenes
+document.addEventListener('DOMContentLoaded', () => {
+    const examenesTab = document.querySelector('[data-tab="examenes"]');
+    if (examenesTab) {
+        examenesTab.addEventListener('click', () => {
+            if (!DashboardExamenes.examenes.length) {
+                DashboardExamenes.init();
+            }
+        });
+    }
+});

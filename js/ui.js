@@ -404,11 +404,15 @@ class UIManager {
 
         // Crear contenido del modal
         const modalContent = document.createElement('div');
-        modalContent.className = 'bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col';
+        modalContent.className = 'bg-white rounded-lg shadow-xl max-w-2xl w-full';
+        modalContent.style.maxHeight = '90vh';
+        modalContent.style.display = 'flex';
+        modalContent.style.flexDirection = 'column';
 
         // Header del modal (fijo)
         const modalHeader = document.createElement('div');
-        modalHeader.className = 'bg-blue-600 text-white p-6 rounded-t-lg flex-shrink-0';
+        modalHeader.className = 'bg-blue-600 text-white p-6 rounded-t-lg';
+        modalHeader.style.flexShrink = '0';
         modalHeader.innerHTML = `
             <h2 class="text-2xl font-bold">${especialidad.descEspecialidad}</h2>
             <p class="text-blue-100 mt-2">Selecciona una opción para continuar</p>
@@ -416,7 +420,10 @@ class UIManager {
 
         // Body del modal con opciones (scrollable)
         const modalBody = document.createElement('div');
-        modalBody.className = 'p-6 space-y-4 overflow-y-auto flex-1';
+        modalBody.className = 'p-6 space-y-4';
+        modalBody.style.overflowY = 'auto';
+        modalBody.style.flex = '1';
+        modalBody.style.minHeight = '0'; // Fix para que flex funcione correctamente
 
         opciones.forEach((opcion, index) => {
             const opcionCard = document.createElement('div');
