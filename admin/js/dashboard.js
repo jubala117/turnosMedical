@@ -995,102 +995,175 @@ const DashboardExamenes = {
         }
     },
 
-    // Renderizar lista de exámenes
+    // Renderizar lista jerárquica de exámenes
     renderizarExamenes() {
-        const grid = document.getElementById('examenes-grid');
+        const container = document.getElementById('examenes-grid');
         const empty = document.getElementById('examenes-empty');
         const importNotice = document.getElementById('import-notice');
 
-        // Filtrar exámenes según el filtro actual
-        let examenesFiltrados = this.examenes;
-        if (this.filtroActual === 'laboratorio') {
-            examenesFiltrados = this.examenes.filter(e => e.id_config == 21);
-        } else if (this.filtroActual === 'imagen') {
-            examenesFiltrados = this.examenes.filter(e => e.id_config == 23);
-        }
-
         // Mostrar/ocultar aviso de importación
-        if (examenesFiltrados.length === 0 && this.filtroActual === 'laboratorio') {
-            // Mostrar aviso de importación solo para laboratorio vacío
+        if (this.categorias.length === 0 && this.filtroActual === 'laboratorio') {
             importNotice.classList.remove('hidden');
             empty.classList.add('hidden');
-            grid.classList.add('hidden');
-        } else if (examenesFiltrados.length === 0) {
-            // Mostrar empty state para otros casos
+            container.classList.add('hidden');
+            return;
+        } else if (this.categorias.length === 0) {
             importNotice.classList.add('hidden');
-            grid.classList.add('hidden');
+            container.classList.add('hidden');
             empty.classList.remove('hidden');
-        } else {
-            // Mostrar exámenes
-            importNotice.classList.add('hidden');
-            empty.classList.add('hidden');
-            grid.classList.remove('hidden');
-            grid.innerHTML = examenesFiltrados.map(examen => this.crearTarjetaExamen(examen)).join('');
+            return;
         }
+
+        // Mostrar lista jerárquica
+        importNotice.classList.add('hidden');
+        empty.classList.add('hidden');
+        container.classList.remove('hidden');
+
+        // Cambiar grid a lista
+        container.className = 'bg-white rounded-lg shadow overflow-hidden';
+
+        let html = '<div class="divide-y divide-gray-200">';
+
+        this.categorias.forEach(categoria => {
+            html += this.crearCategoriaHTML(categoria);
+        });
+
+        html += '</div>';
+        container.innerHTML = html;
     },
 
-    // Crear HTML de tarjeta de examen
-    crearTarjetaExamen(examen) {
-        const tipoIcono = examen.id_config == 21 ? 'fa-vial' : 'fa-x-ray';
-        const tipoColor = examen.id_config == 21 ? 'blue' : 'purple';
-        const tipoTexto = examen.id_config == 21 ? 'Laboratorio' : 'Imagenología';
+    // Crear HTML de una categoría con sus exámenes
+    crearCategoriaHTML(categoria) {
+        const totalExamenes = categoria.examenes.length;
 
-        return `
-            <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                <!-- Header -->
-                <div class="bg-${tipoColor}-50 p-4 border-b border-${tipoColor}-100">
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <div class="flex items-center space-x-2 mb-2">
-                                <i class="fas ${tipoIcono} text-${tipoColor}-600"></i>
-                                <span class="text-xs font-semibold text-${tipoColor}-600 uppercase">${tipoTexto}</span>
-                            </div>
-                            <h3 class="text-lg font-bold text-gray-800 mb-1">${examen.nombre}</h3>
-                            ${examen.descripcion ? `<p class="text-sm text-gray-600">${examen.descripcion}</p>` : ''}
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <button onclick="DashboardExamenes.toggleActivo(${examen.id})"
-                                    class="px-2 py-1 rounded-full text-xs font-semibold ${examen.activo ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}">
-                                ${examen.activo ? 'Activo' : 'Inactivo'}
-                            </button>
-                        </div>
+        let html = `
+            <!-- Categoría -->
+            <div class="bg-gray-50">
+                <div class="flex items-center justify-between p-4 hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center space-x-3 flex-1">
+                        <i class="fas fa-folder text-blue-600 text-lg"></i>
+                        <span class="font-bold text-gray-800 text-lg">${categoria.nombre}</span>
+                        <span class="text-sm text-gray-500">(${totalExamenes} exámenes)</span>
                     </div>
-                </div>
-
-                <!-- Body -->
-                <div class="p-4">
-                    <!-- Precios -->
-                    <div class="grid grid-cols-2 gap-4 mb-4">
-                        <div class="text-center p-3 bg-blue-50 rounded-lg">
-                            <p class="text-xs text-gray-600 mb-1">Particular</p>
-                            <p class="text-xl font-bold text-blue-600">$${parseFloat(examen.precio_particular).toFixed(2)}</p>
-                        </div>
-                        <div class="text-center p-3 bg-purple-50 rounded-lg">
-                            <p class="text-xs text-gray-600 mb-1">Club</p>
-                            <p class="text-xl font-bold text-purple-600">$${parseFloat(examen.precio_club).toFixed(2)}</p>
-                        </div>
-                    </div>
-
-                    <!-- Acciones -->
-                    <div class="flex space-x-2">
-                        <button onclick="DashboardExamenes.editarExamen(${examen.id})"
-                                class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors">
-                            <i class="fas fa-edit mr-1"></i>
-                            Editar
+                    <div class="flex items-center space-x-2">
+                        <button onclick="DashboardExamenes.editarCategoria(${categoria.id}, '${categoria.nombre.replace(/'/g, "\\'")}')"
+                                class="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors">
+                            <i class="fas fa-edit mr-1"></i>Editar
                         </button>
-                        <button onclick="DashboardExamenes.eliminarExamen(${examen.id}, '${examen.nombre.replace(/'/g, "\\'")}')"
-                                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors">
-                            <i class="fas fa-trash"></i>
+                        <button onclick="DashboardExamenes.eliminarCategoria(${categoria.id}, '${categoria.nombre.replace(/'/g, "\\'")}', ${totalExamenes})"
+                                class="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors">
+                            <i class="fas fa-trash mr-1"></i>Eliminar
                         </button>
                     </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="bg-gray-50 px-4 py-2 border-t text-xs text-gray-500">
-                    Última actualización: ${new Date(examen.fecha_actualizacion).toLocaleDateString('es-ES')}
                 </div>
             </div>
         `;
+
+        // Exámenes de la categoría
+        categoria.examenes.forEach(examen => {
+            html += this.crearExamenHTML(examen);
+        });
+
+        return html;
+    },
+
+    // Crear HTML de un examen individual
+    crearExamenHTML(examen) {
+        const activoClass = examen.activo ? 'bg-white' : 'bg-gray-50 opacity-60';
+        const activoBadge = examen.activo
+            ? '<span class="px-2 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded">Activo</span>'
+            : '<span class="px-2 py-1 bg-gray-200 text-gray-600 text-xs font-semibold rounded">Inactivo</span>';
+
+        return `
+            <div class="${activoClass} hover:bg-blue-50 transition-colors">
+                <div class="flex items-center justify-between p-4 pl-12">
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-file-medical text-gray-400"></i>
+                            <span class="text-gray-800 font-medium">${examen.nombre}</span>
+                            ${activoBadge}
+                        </div>
+                        <div class="flex items-center space-x-6 mt-2 ml-6 text-sm text-gray-600">
+                            <span><i class="fas fa-user mr-1"></i> Particular: <strong>$${parseFloat(examen.precio_particular).toFixed(2)}</strong></span>
+                            <span><i class="fas fa-star mr-1"></i> Club: <strong>$${parseFloat(examen.precio_club).toFixed(2)}</strong></span>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="DashboardExamenes.editarExamen(${examen.id})"
+                                class="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors">
+                            <i class="fas fa-edit mr-1"></i>Editar
+                        </button>
+                        <button onclick="DashboardExamenes.eliminarExamen(${examen.id}, '${examen.nombre.replace(/'/g, "\\'")}' )"
+                                class="px-3 py-1 text-sm bg-red-600 hover:bg-red-700 text-white rounded transition-colors">
+                            <i class="fas fa-trash mr-1"></i>Eliminar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    },
+
+    // Editar categoría
+    async editarCategoria(idCategoria, nombreActual) {
+        const nuevoNombre = prompt(`Editar nombre de categoría:`, nombreActual);
+
+        if (!nuevoNombre || nuevoNombre === nombreActual) {
+            return;
+        }
+
+        try {
+            const response = await fetch('api/categorias_config.php', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: idCategoria,
+                    nombre: nuevoNombre
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('Categoría actualizada', 'success');
+                await this.cargarExamenes(this.filtroActual);
+            } else {
+                throw new Error(result.error || 'Error al actualizar categoría');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error: ' + error.message, 'error');
+        }
+    },
+
+    // Eliminar categoría
+    async eliminarCategoria(idCategoria, nombre, totalExamenes) {
+        if (totalExamenes > 0) {
+            if (!confirm(`La categoría "${nombre}" tiene ${totalExamenes} exámenes. ¿Eliminar todo?`)) {
+                return;
+            }
+        } else {
+            if (!confirm(`¿Eliminar categoría "${nombre}"?`)) {
+                return;
+            }
+        }
+
+        try {
+            const response = await fetch(`api/categorias_config.php?id=${idCategoria}`, {
+                method: 'DELETE'
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                showToast('Categoría eliminada', 'success');
+                await this.cargarExamenes(this.filtroActual);
+            } else {
+                throw new Error(result.error || 'Error al eliminar');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            showToast('Error: ' + error.message, 'error');
+        }
     },
 
     // Filtrar por tipo
@@ -1130,8 +1203,17 @@ const DashboardExamenes = {
 
     // Editar examen
     async editarExamen(id) {
-        const examen = this.examenes.find(e => e.id === id);
-        if (!examen) return;
+        // Buscar el examen en la estructura de categorías
+        let examen = null;
+        for (const categoria of this.categorias) {
+            examen = categoria.examenes.find(e => e.id === id);
+            if (examen) break;
+        }
+
+        if (!examen) {
+            showToast('Examen no encontrado', 'error');
+            return;
+        }
 
         this.examenEditando = examen;
         document.getElementById('examen-modal-title').textContent = 'Editar Examen';
@@ -1192,7 +1274,13 @@ const DashboardExamenes = {
 
     // Toggle estado activo/inactivo
     async toggleActivo(id) {
-        const examen = this.examenes.find(e => e.id === id);
+        // Buscar el examen en la estructura de categorías
+        let examen = null;
+        for (const categoria of this.categorias) {
+            examen = categoria.examenes.find(e => e.id === id);
+            if (examen) break;
+        }
+
         if (!examen) return;
 
         const nuevoEstado = examen.activo == 1 ? 0 : 1;
