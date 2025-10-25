@@ -1260,18 +1260,18 @@ const DashboardExamenes = {
 
     // Importar exámenes desde mapeo hardcodeado
     async importarExamenes() {
-        if (!confirm('¿Deseas importar los exámenes de laboratorio? Esto creará ~150 exámenes organizados en 13 categorías.')) {
-            return;
-        }
-
         try {
-            showToast('Importando exámenes... Esto puede tomar unos segundos', 'info');
+            showToast('Importando exámenes de laboratorio... Por favor espera', 'info');
 
-            const response = await fetch('api/importar_examenes.php', {
-                method: 'POST'
-            });
+            const response = await fetch('api/importar_examenes.php');
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
             const result = await response.json();
+
+            console.log('Resultado de importación:', result);
 
             if (result.success) {
                 showToast(`¡Importación exitosa! ${result.total_examenes} exámenes en ${result.total_categorias} categorías`, 'success');
@@ -1282,10 +1282,14 @@ const DashboardExamenes = {
                 // Ocultar aviso de importación
                 document.getElementById('import-notice').classList.add('hidden');
             } else {
-                throw new Error(result.error || 'Error en la importación');
+                showToast('Advertencia: ' + result.error, 'warning');
+
+                // Si ya existen, recargar igualmente
+                await this.cargarExamenes('laboratorio');
+                document.getElementById('import-notice').classList.add('hidden');
             }
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error completo:', error);
             showToast('Error al importar exámenes: ' + error.message, 'error');
         }
     },

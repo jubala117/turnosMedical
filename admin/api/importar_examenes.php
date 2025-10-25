@@ -10,6 +10,20 @@ header("Content-Type: application/json; charset=UTF-8");
 require_once(__DIR__ . '/../../db_connect.inc.php');
 
 try {
+    // Verificar si ya hay datos importados
+    $sqlCheck = "SELECT COUNT(*) FROM kiosk_item_examen WHERE id_config = 21";
+    $stmtCheck = $conn->prepare($sqlCheck);
+    $stmtCheck->execute();
+    $yaExisten = $stmtCheck->fetchColumn();
+
+    if ($yaExisten > 0) {
+        echo json_encode([
+            'success' => false,
+            'error' => 'Ya existen exámenes de laboratorio importados. Total: ' . $yaExisten
+        ]);
+        exit;
+    }
+
     // =========================================================================
     // LABORATORIO - Crear categorías e importar exámenes
     // =========================================================================
